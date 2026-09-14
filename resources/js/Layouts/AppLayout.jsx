@@ -1,20 +1,28 @@
 import React, { useState, useEffect } from 'react';
-usePage;
 import { Link, usePage } from '@inertiajs/react';
-import { Menu, X, Sun, Moon, Mail, ExternalLink } from 'lucide-react';
+import { Menu, X, Sun, Moon, Mail, ExternalLink, ArrowRight, Code2 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AppLayout({ children }) {
     const { settings, flash, url, auth } = usePage().props;
-    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+    
+    // Initialize theme from document or localStorage, default to dark
+    const [theme, setTheme] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('theme') || 'dark';
+        }
+        return 'dark';
+    });
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+    // Apply theme changes to <html> class and localStorage
     useEffect(() => {
+        const root = document.documentElement;
         if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
+            root.classList.add('dark');
         } else {
-            document.documentElement.classList.remove('dark');
+            root.classList.remove('dark');
         }
         localStorage.setItem('theme', theme);
     }, [theme]);
@@ -23,28 +31,43 @@ export default function AppLayout({ children }) {
         if (flash?.success) {
             toast.success(flash.success, {
                 style: {
-                    background: theme === 'dark' ? '#1e293b' : '#ffffff',
-                    color: theme === 'dark' ? '#f1f5f9' : '#0f172a',
+                    background: theme === 'dark' ? '#161E2E' : '#ffffff',
+                    color: theme === 'dark' ? '#F9FAFB' : '#0F172A',
+                    border: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #E2E8F0',
                 }
             });
         }
         if (flash?.error) {
             toast.error(flash.error, {
                 style: {
-                    background: theme === 'dark' ? '#1e293b' : '#ffffff',
-                    color: theme === 'dark' ? '#f1f5f9' : '#0f172a',
+                    background: theme === 'dark' ? '#161E2E' : '#ffffff',
+                    color: theme === 'dark' ? '#F9FAFB' : '#0F172A',
+                    border: theme === 'dark' ? '1px solid rgba(239,68,68,0.3)' : '1px solid #FCA5A5',
                 }
             });
         }
     }, [flash, theme]);
 
-    const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+    const toggleTheme = () => {
+        const nextTheme = theme === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+        const root = document.documentElement;
+        if (nextTheme === 'dark') {
+            root.classList.add('dark');
+        } else {
+            root.classList.remove('dark');
+        }
+        localStorage.setItem('theme', nextTheme);
+    };
 
     const navigation = [
         { name: 'Home', href: route('home') },
         { name: 'About', href: route('about') },
+        { name: 'Expertise', href: route('home') + '#expertise' },
         { name: 'Projects', href: route('projects.index') },
-        { name: 'Blog', href: route('blogs.index') },
+        { name: 'Experience', href: route('home') + '#experience' },
+        { name: 'Services', href: route('home') + '#services' },
+        { name: 'Contact', href: route('home') + '#contact' },
     ];
 
     const getSocialIcon = (key) => {
@@ -77,99 +100,96 @@ export default function AppLayout({ children }) {
     };
 
     const developerName = settings?.name || 'Jahid Hasan';
-    const developerDesignation = settings?.designation || 'Full Stack Developer';
+    const developerTitle = settings?.designation || 'Software Engineer';
 
     return (
-        <div className="min-h-screen transition-colors duration-300 bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex flex-col font-sans">
+        <div className="min-h-screen transition-colors duration-300 bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex flex-col font-sans selection:bg-cyan-500/20 selection:text-cyan-600 dark:selection:text-cyan-300">
             <Toaster position="top-right" reverseOrder={false} />
             
-            {/* Header / Navbar */}
-            <header className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-950/70 backdrop-blur-md">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                    {/* Logo/Branding */}
-                    <Link href={route('home')} className="flex items-center space-x-2">
-                        {settings?.logo ? (
-                            <img src={settings.logo} alt="Logo" className="h-8 w-8 object-contain rounded-lg" />
-                        ) : (
-                            <div className="h-9 w-9 rounded-lg bg-gradient-to-tr from-indigo-500 to-violet-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20">
-                                {developerName.split(' ').map(n => n[0]).join('')}
-                            </div>
-                        )}
-                        <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 dark:from-indigo-400 dark:via-violet-400 dark:to-indigo-400 bg-clip-text text-transparent">
-                            {developerName}
-                        </span>
+            {/* Header / Sticky Navigation */}
+            <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl transition-colors">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
+                    {/* Brand Identity */}
+                    <Link href={route('home')} className="flex items-center gap-3 group">
+                        <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-emerald-400 flex items-center justify-center font-bold text-white shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-transform">
+                            <Code2 className="h-5 w-5 text-slate-950" strokeWidth={2.5} />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="font-extrabold text-lg tracking-wider text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors uppercase">
+                                {developerName}
+                            </span>
+                            <span className="text-[11px] font-mono text-cyan-600 dark:text-cyan-400/90 tracking-widest uppercase">
+                                // {developerTitle}
+                            </span>
+                        </div>
                     </Link>
 
                     {/* Desktop Navigation */}
-                    <nav className="hidden md:flex items-center space-x-8">
+                    <nav className="hidden lg:flex items-center space-x-7">
                         {navigation.map((item) => {
-                            const isActive = url === new URL(item.href, window.location.origin).pathname;
+                            const isCurrent = url === new URL(item.href, window.location.origin).pathname;
                             return (
                                 <Link
                                     key={item.name}
                                     href={item.href}
-                                    className={`relative text-sm font-medium transition-colors hover:text-indigo-600 dark:hover:text-indigo-400 ${
-                                        isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'
+                                    className={`relative text-sm font-medium transition-colors hover:text-cyan-600 dark:hover:text-cyan-400 ${
+                                        isCurrent 
+                                            ? 'text-cyan-600 dark:text-cyan-400 font-semibold' 
+                                            : 'text-slate-600 dark:text-slate-300'
                                     }`}
                                 >
                                     {item.name}
-                                    {isActive && (
-                                        <motion.span
-                                            layoutId="activeNav"
-                                            className="absolute -bottom-[21px] left-0 right-0 h-0.5 bg-indigo-600 dark:bg-indigo-400"
-                                            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                                        />
-                                    )}
                                 </Link>
                             );
                         })}
                     </nav>
 
-                    {/* Right utility buttons */}
+                    {/* Right Utility Buttons & Let's Talk CTA */}
                     <div className="hidden md:flex items-center space-x-4">
                         <button
                             onClick={toggleTheme}
-                            className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
+                            className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700 transition-all cursor-pointer"
                             aria-label="Toggle Theme"
+                            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
                         >
-                            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                            {theme === 'dark' ? (
+                                <Sun className="h-4 w-4 text-amber-400" />
+                            ) : (
+                                <Moon className="h-4 w-4 text-slate-700" />
+                            )}
                         </button>
+                        
                         {auth?.user ? (
                             <Link
                                 href={route('dashboard')}
-                                className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-750 dark:bg-violet-550 dark:hover:bg-violet-650 rounded-lg shadow-md hover:shadow-lg transition-all"
+                                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-lg shadow-indigo-600/25 transition-all"
                             >
-                                Dashboard
+                                CMS Panel
                             </Link>
                         ) : (
-                            <>
-                                <Link
-                                    href={route('login')}
-                                    className="text-sm font-semibold text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors"
-                                >
-                                    Login
-                                </Link>
-                                <Link
-                                    href={route('about') + '#contact'}
-                                    className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg shadow-md hover:shadow-lg transition-all"
-                                >
-                                    Hire Me
-                                </Link>
-                            </>
+                            <Link
+                                href={route('home') + '#contact'}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-slate-950 bg-gradient-to-r from-cyan-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 rounded-xl shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 hover:-translate-y-0.5 transition-all"
+                            >
+                                Let's Talk
+                                <ArrowRight className="h-4 w-4" />
+                            </Link>
                         )}
                     </div>
 
-                    {/* Mobile Menu Toggle */}
-                    <div className="flex items-center space-x-2 md:hidden">
+                    {/* Mobile Hamburger Menu Button */}
+                    <div className="flex items-center space-x-2 lg:hidden">
                         <button
                             onClick={toggleTheme}
-                            className="p-2 rounded-lg bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 mr-1"
+                            className="p-2 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 mr-1 cursor-pointer"
+                            aria-label="Toggle Theme"
                         >
-                            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                            {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-slate-700" />}
                         </button>
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className="p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
+                            className="p-2 rounded-lg text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors"
+                            aria-label="Toggle Mobile Menu"
                         >
                             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                         </button>
@@ -184,52 +204,28 @@ export default function AppLayout({ children }) {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden"
+                        className="lg:hidden border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-2xl overflow-hidden sticky top-18 z-40"
                     >
-                        <div className="px-4 py-4 space-y-3">
-                            {navigation.map((item) => {
-                                const isActive = url === new URL(item.href, window.location.origin).pathname;
-                                return (
-                                    <Link
-                                        key={item.name}
-                                        href={item.href}
-                                        onClick={() => setMobileMenuOpen(false)}
-                                        className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                                            isActive 
-                                                ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400' 
-                                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/50'
-                                        }`}
-                                    >
-                                        {item.name}
-                                    </Link>
-                                );
-                            })}
-                            {auth?.user ? (
+                        <div className="px-4 py-6 space-y-3">
+                            {navigation.map((item) => (
                                 <Link
-                                    href={route('dashboard')}
+                                    key={item.name}
+                                    href={item.href}
                                     onClick={() => setMobileMenuOpen(false)}
-                                    className="block w-full text-center px-4 py-2.5 text-base font-semibold text-white bg-indigo-600 rounded-md shadow-md"
+                                    className="block px-4 py-3 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-slate-100 dark:hover:bg-slate-900 border border-transparent hover:border-slate-200 dark:hover:border-slate-800 transition-colors"
                                 >
-                                    Dashboard
+                                    {item.name}
                                 </Link>
-                            ) : (
-                                <div className="space-y-2 pt-2">
-                                    <Link
-                                        href={route('login')}
-                                        onClick={() => setMobileMenuOpen(false)}
-                                        className="block w-full text-center px-4 py-2.5 text-base font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-900 rounded-md"
-                                    >
-                                        Admin Login
-                                    </Link>
-                                    <Link
-                                        href={route('about') + '#contact'}
-                                        onClick={() => setMobileMenuOpen(false)}
-                                        className="block w-full text-center px-4 py-2.5 text-base font-medium text-white bg-indigo-600 rounded-md shadow-md"
-                                    >
-                                        Hire Me
-                                    </Link>
-                                </div>
-                            )}
+                            ))}
+                            <div className="pt-4 border-t border-slate-200 dark:border-slate-900">
+                                <Link
+                                    href={route('home') + '#contact'}
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="block w-full text-center px-4 py-3 text-base font-semibold text-slate-950 bg-gradient-to-r from-cyan-400 to-emerald-400 rounded-xl shadow-lg shadow-cyan-500/20"
+                                >
+                                    Let's Talk
+                                </Link>
+                            </div>
                         </div>
                     </motion.div>
                 )}
@@ -237,92 +233,104 @@ export default function AppLayout({ children }) {
 
             {/* Main Content Area */}
             <main className="flex-grow">
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={url}
-                        initial={{ opacity: 0, y: 15 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -15 }}
-                        transition={{ duration: 0.3 }}
-                        className="w-full"
-                    >
-                        {children}
-                    </motion.div>
-                </AnimatePresence>
+                {children}
             </main>
 
-            {/* Footer */}
-            <footer className="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 py-12 transition-colors duration-300">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {/* Left Column: Branding */}
-                    <div className="space-y-4">
-                        <div className="flex items-center space-x-2">
-                            <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 to-violet-400 bg-clip-text text-transparent">
-                                {developerName}
-                            </span>
+            {/* Global Footer */}
+            <footer className="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800/80 pt-16 pb-12 transition-colors duration-300">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-slate-200 dark:border-slate-800/60">
+                        {/* Brand Column */}
+                        <div className="md:col-span-5 space-y-4">
+                            <div className="flex items-center gap-2.5">
+                                <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-500 flex items-center justify-center font-bold text-white shadow-md shadow-cyan-500/20">
+                                    <Code2 className="h-5 w-5 text-slate-950" />
+                                </div>
+                                <span className="font-extrabold text-xl tracking-wider text-slate-900 dark:text-white uppercase">
+                                    {developerName}
+                                </span>
+                            </div>
+                            <p className="text-cyan-600 dark:text-cyan-400 font-mono text-sm">
+                                {developerTitle}
+                            </p>
+                            <p className="text-slate-600 dark:text-slate-400 text-sm max-w-md leading-relaxed">
+                                {settings?.tagline || 'Building modern web applications, business software & automation solutions.'}
+                            </p>
+                            <div className="flex items-center gap-3 pt-2">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse"></span>
+                                    Available for Enterprise Projects
+                                </span>
+                            </div>
                         </div>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm">
-                            {settings?.short_intro || 'High-performance and secure software architectures crafted with modern stacks.'}
-                        </p>
-                    </div>
 
-                    {/* Middle Column: Quick Links */}
-                    <div className="space-y-3">
-                        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Navigation</h4>
-                        <ul className="space-y-2 text-sm text-slate-500 dark:text-slate-400">
-                            {navigation.map((item) => (
-                                <li key={item.name}>
-                                    <Link href={item.href} className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-                                        {item.name}
-                                    </Link>
-                                </li>
-                            ))}
-                            {settings?.email && (
-                                <li>
-                                    <a href={`mailto:${settings.email}`} className="flex items-center gap-1.5 hover:text-indigo-600 dark:hover:text-indigo-400">
-                                        <Mail className="h-4 w-4" /> {settings.email}
-                                    </a>
-                                </li>
-                            )}
-                        </ul>
-                    </div>
+                        {/* Navigation Links */}
+                        <div className="md:col-span-3 space-y-3">
+                            <h4 className="text-xs font-mono font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                                Quick Navigation
+                            </h4>
+                            <ul className="space-y-2.5 text-sm">
+                                {navigation.map((item) => (
+                                    <li key={item.name}>
+                                        <Link href={item.href} className="text-slate-600 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
+                                            {item.name}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
 
-                    {/* Right Column: Social Links */}
-                    <div className="space-y-4">
-                        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Social Channels</h4>
-                        <div className="flex space-x-4">
-                            {['github_url', 'linkedin_url', 'twitter_url', 'facebook_url'].map((key) => {
-                                const url = settings?.[key];
-                                if (!url) return null;
-                                return (
+                        {/* Social & Contact Channels */}
+                        <div className="md:col-span-4 space-y-4">
+                            <h4 className="text-xs font-mono font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                                Connect & Inquire
+                            </h4>
+                            <p className="text-sm text-slate-600 dark:text-slate-400">
+                                Have an upcoming software project, ERP module, or lead automation requirement?
+                            </p>
+                            <div className="flex flex-wrap gap-2.5">
+                                {['github_url', 'linkedin_url', 'twitter_url', 'facebook_url'].map((key) => {
+                                    const link = settings?.[key];
+                                    if (!link) return null;
+                                    return (
+                                        <a
+                                            key={key}
+                                            href={link}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:border-cyan-500/40 hover:bg-slate-200 dark:hover:bg-slate-900 transition-all hover:-translate-y-0.5"
+                                        >
+                                            {getSocialIcon(key)}
+                                        </a>
+                                    );
+                                })}
+                                {settings?.email && (
                                     <a
-                                        key={key}
-                                        href={url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="p-2 rounded-full border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-indigo-600 hover:border-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 dark:hover:border-indigo-400 transition-all hover:-translate-y-1"
+                                        href={`mailto:${settings.email}`}
+                                        className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:border-cyan-500/40 hover:bg-slate-200 dark:hover:bg-slate-900 transition-all hover:-translate-y-0.5"
+                                        title="Email Directly"
                                     >
-                                        {getSocialIcon(key)}
+                                        <Mail className="h-5 w-5" />
                                     </a>
-                                );
-                            })}
-                        </div>
-                        <div className="pt-2">
+                                )}
+                            </div>
                             {settings?.email && (
-                                <p className="text-xs text-slate-400 dark:text-slate-500">
-                                    Available for freelance & full-time opportunities.
+                                <p className="text-xs text-slate-500 font-mono">
+                                    Direct: <a href={`mailto:${settings.email}`} className="text-slate-600 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 underline">{settings.email}</a>
                                 </p>
                             )}
                         </div>
                     </div>
-                </div>
 
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 pt-8 border-t border-slate-100 dark:border-slate-900 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-400 dark:text-slate-500 gap-4">
-                    <p>&copy; {new Date().getFullYear()} {developerName}. All rights reserved.</p>
-                    <div className="flex space-x-6">
-                        <Link href={route('login')} className="hover:underline flex items-center gap-1">
-                            Admin Login <ExternalLink className="h-3 w-3" />
-                        </Link>
+                    {/* Bottom Copyright */}
+                    <div className="pt-8 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500 gap-4">
+                        <p>© 2026 {developerName}. All rights reserved.</p>
+                        <div className="flex items-center space-x-6 font-mono text-[11px]">
+                            <span>Laravel 12 • React 19 • MySQL</span>
+                            <Link href={route('login')} className="text-slate-500 hover:text-cyan-600 dark:hover:text-cyan-400 flex items-center gap-1 transition-colors">
+                                Admin CMS <ExternalLink className="h-3 w-3" />
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </footer>

@@ -4,17 +4,55 @@ namespace App\Services;
 
 use App\Models\Project;
 use App\Models\ProjectScreenshot;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ProjectService
 {
+    /**
+     * Get featured projects for showcase with eager-loaded screenshots.
+     */
+    public function getFeaturedProjects(int $limit = 6): Collection
+    {
+        return Project::with('screenshots')
+            ->where('is_featured', true)
+            ->orderBy('id', 'asc')
+            ->take($limit)
+            ->get();
+    }
+
+    /**
+     * Find project by slug for detailed Case Study view.
+     */
+    public function getBySlug(string $slug): ?Project
+    {
+        return Project::with('screenshots')
+            ->where('slug', $slug)
+            ->firstOrFail();
+    }
+
+    /**
+     * Get related projects in the same category.
+     */
+    public function getRelatedProjects(Project $project, int $limit = 3): Collection
+    {
+        return Project::with('screenshots')
+            ->where('category', $project->category)
+            ->where('id', '!=', $project->id)
+            ->take($limit)
+            ->get();
+    }
+
+    /**
+     * Paginated public projects with filters and scopes.
+     */
     public function paginatedForPublic(?string $category = null, ?string $search = null, string $sort = 'newest', int $perPage = 6): LengthAwarePaginator
     {
         $query = Project::with('screenshots');
 
-        if ($category) {
+        if ($category && $category !== 'all') {
             $query->where('category', $category);
         }
 

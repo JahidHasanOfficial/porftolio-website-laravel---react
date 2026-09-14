@@ -27,6 +27,30 @@ class BlogService
         return $query->orderBy('publish_date', 'desc')->paginate($perPage);
     }
 
+    public function getLatestPublished(int $limit = 3)
+    {
+        return Blog::where('status', 'published')
+            ->orderBy('publish_date', 'desc')
+            ->take($limit)
+            ->get();
+    }
+
+    public function getBySlug(string $slug): Blog
+    {
+        return Blog::where('slug', $slug)
+            ->where('status', 'published')
+            ->firstOrFail();
+    }
+
+    public function getRelatedBlogs(Blog $blog, int $limit = 3)
+    {
+        return Blog::where('category', $blog->category)
+            ->where('id', '!=', $blog->id)
+            ->where('status', 'published')
+            ->take($limit)
+            ->get();
+    }
+
     public function allForAdmin(int $perPage = 10): LengthAwarePaginator
     {
         return Blog::orderBy('created_at', 'desc')->paginate($perPage);

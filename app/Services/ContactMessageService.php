@@ -17,10 +17,15 @@ class ContactMessageService
 
     public function create(array $data): ContactMessage
     {
+        if (empty($data['subject'])) {
+            $type = $data['project_type'] ?? 'Software Development';
+            $data['subject'] = "New Inquiry: {$type}";
+        }
+
         $message = ContactMessage::create($data);
 
-        // Notify admin via log (simulating Email Notification)
-        Log::info("New Contact Message received from {$message->name} ({$message->email}): {$message->subject}");
+        // Notify admin / log inquiry for processing
+        Log::info("New Contact Message received from {$message->name} ({$message->email}) regarding {$message->subject}");
 
         return $message;
     }

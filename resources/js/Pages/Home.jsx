@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useForm, Link, usePage } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { 
@@ -6,67 +6,29 @@ import {
     Send, ShieldCheck, ShoppingCart, Wrench, ExternalLink,
     ChevronRight, Star, Atom, Layers, Palette, Terminal, Link2, 
     Database, GitBranch, Box, Binary, Server, Cloud, 
-    TerminalSquare, Globe, Briefcase, Award, GraduationCap, Quote
+    TerminalSquare, Globe, Briefcase, Award, CheckCircle2, 
+    Zap, Workflow, Users, FileText, ArrowUpRight, BarChart3, 
+    Clock, Sparkles, Check, CheckCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Custom inline SVG GitHub icon to bypass missing lucide-react Github export
-const GithubIconCustom = (props) => (
+// Custom GitHub Icon SVG
+const GithubIcon = (props) => (
     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
         <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
         <path d="M9 18c-4.51 2-5-2-7-2" />
     </svg>
 );
 
-// Icon mapping helper for rendering skill icons dynamically
-const iconMap = {
-    Atom: Atom,
-    Code2: Code2,
-    Html5: Globe,
-    Layers: Layers,
-    Palette: Palette,
-    Cpu: Cpu,
-    Terminal: Terminal,
-    Link2: Link2,
-    Database: Database,
-    GitBranch: GitBranch,
-    Github: GithubIconCustom,
-    Box: Box,
-    Send: Send,
-    Binary: Binary,
-    Server: Server,
-    Cloud: Cloud,
-    TerminalSquare: TerminalSquare,
-};
-
-// Skill tier helper (maps numeric percentages to professional levels)
-const getSkillTier = (percentage) => {
-    if (percentage >= 95) return 'Expert';
-    if (percentage >= 85) return 'Advanced';
-    if (percentage >= 70) return 'Proficient';
-    return 'Intermediate';
-};
-
-// Custom typing effect hook
-function useTypingEffect(words, typingSpeed = 100, deletingSpeed = 50, delayBetween = 1500) {
+// Dynamic Typing Effect Hook
+function useTypingEffect(words, typingSpeed = 90, deletingSpeed = 45, delayBetween = 1800) {
     const [wordIndex, setWordIndex] = useState(0);
     const [currentText, setCurrentText] = useState('');
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // Reset state if words array contents change to prevent index out of bounds
-    const wordsString = JSON.stringify(words);
-    useEffect(() => {
-        setWordIndex(0);
-        setCurrentText('');
-        setIsDeleting(false);
-    }, [wordsString]);
-
     useEffect(() => {
         if (!words || words.length === 0) return;
-        
-        // Clamp and fallback index
-        const safeIndex = wordIndex >= words.length ? 0 : wordIndex;
-        const currentWord = words[safeIndex] || '';
+        const currentWord = words[wordIndex % words.length] || '';
         let timer;
 
         if (isDeleting) {
@@ -83,454 +45,518 @@ function useTypingEffect(words, typingSpeed = 100, deletingSpeed = 50, delayBetw
             timer = setTimeout(() => setIsDeleting(true), delayBetween);
         } else if (isDeleting && currentText === '') {
             setIsDeleting(false);
-            setWordIndex((prev) => (prev + 1) % words.length);
+            setWordIndex(prev => (prev + 1) % words.length);
         }
 
         return () => clearTimeout(timer);
-    }, [currentText, isDeleting, wordIndex, wordsString]);
+    }, [currentText, isDeleting, wordIndex, words]);
 
     return currentText;
 }
 
 export default function Home({ skills, experiences, services, featuredProjects, testimonials, latestBlogs, resume }) {
     const { settings } = usePage().props;
-    const [activeCategory, setActiveCategory] = useState('all');
+    const [selectedProjectCategory, setSelectedProjectCategory] = useState('all');
 
-    // Load and memoize typing animation words safely
-    const typingWords = React.useMemo(() => {
-        let words = ['Laravel Expert', 'React Developer', 'Full Stack Engineer'];
+    // Memoize typing animation terms
+    const typingWords = useMemo(() => {
         if (settings?.typing_titles) {
             try {
-                if (typeof settings.typing_titles === 'string') {
-                    words = JSON.parse(settings.typing_titles);
-                } else if (Array.isArray(settings.typing_titles)) {
-                    words = settings.typing_titles;
-                }
+                const parsed = typeof settings.typing_titles === 'string' ? JSON.parse(settings.typing_titles) : settings.typing_titles;
+                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
             } catch (e) {
-                console.error('Failed to parse typing_titles:', e);
+                console.error('Typing titles parse error', e);
             }
         }
-        return words;
+        return [
+            'Software Engineer',
+            'Enterprise ERP Builder',
+            'Sales CRM & Automation Specialist',
+            'Laravel & React Specialist',
+            'Database & System Architect'
+        ];
     }, [settings?.typing_titles]);
 
-    const typedText = useTypingEffect(typingWords);
+    const typedTitle = useTypingEffect(typingWords);
 
-    // Contact form using Inertia useForm helper
-    const { data, setData, post, processing, errors, reset } = useForm({
+    // Contact Form with Inertia
+    const { data, setData, post, processing, errors, reset, recentlySuccessful } = useForm({
         name: '',
         email: '',
         phone: '',
+        project_type: 'Enterprise ERP',
+        budget: '$1,500 - $5,000',
         subject: '',
         message: '',
-        website_url: '', // Honeypot spam check
+        website_url: '', // honeypot
     });
 
-    const handleContactSubmit = (e) => {
+    const submitContact = (e) => {
         e.preventDefault();
         post(route('contact.submit'), {
-            onSuccess: () => {
-                reset();
-            }
+            preserveScroll: true,
+            onSuccess: () => reset(),
         });
     };
 
-    // Group skills by category
-    const skillCategories = {
-        frontend: 'Frontend',
-        backend: 'Backend',
-        database: 'Database',
-        tools: 'Tools & DevOps',
-        deployment: 'Deployment',
-    };
-
-    const groupedSkills = skills.reduce((acc, skill) => {
-        const cat = skill.category || 'tools';
-        if (!acc[cat]) acc[cat] = [];
-        acc[cat].push(skill);
-        return acc;
-    }, {});
-
-    const developerName = settings?.name || 'Jahid Hasan';
-    const developerDesignation = settings?.designation || 'Full Stack Developer';
+    // Filter projects for display
+    const filteredProjects = useMemo(() => {
+        if (!featuredProjects) return [];
+        if (selectedProjectCategory === 'all') return featuredProjects;
+        return featuredProjects.filter(p => p.category?.toLowerCase() === selectedProjectCategory.toLowerCase());
+    }, [featuredProjects, selectedProjectCategory]);
 
     return (
         <AppLayout>
-            {/* 1. HERO SECTION */}
-            <section className="relative overflow-hidden pt-24 pb-32 md:pt-36 md:pb-44">
-                {/* Background grids */}
-                <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#f1f5f9_1px,transparent_1px),linear-gradient(to_bottom,#f1f5f9_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-80"></div>
-                
-                {/* Glowing gradients */}
-                <div className="absolute top-0 left-1/4 -z-10 h-96 w-96 rounded-full bg-indigo-500/20 dark:bg-indigo-600/15 opacity-50 blur-[120px]"></div>
-                <div className="absolute top-20 right-1/4 -z-10 h-96 w-96 rounded-full bg-violet-500/20 dark:bg-violet-600/15 opacity-50 blur-[120px]"></div>
+            {/* =========================================================================
+                SECTION 01: HERO SECTION
+               ========================================================================= */}
+            <section className="relative pt-20 pb-18 md:pt-30 md:pb-26 overflow-hidden">
+                {/* Ambient glow backgrounds */}
+                <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-gradient-to-tr from-cyan-500/15 via-indigo-500/10 to-emerald-500/15 blur-[130px] -z-10 pointer-events-none rounded-full" />
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-                        {/* Text Col */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+                        {/* Left Column: Positioning & Call to Actions */}
                         <div className="lg:col-span-7 space-y-8 text-center lg:text-left">
-                            <motion.span 
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold bg-indigo-50/85 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 border border-indigo-100/50 dark:border-indigo-900/50 shadow-sm"
-                            >
-                                <span className="h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-450 animate-pulse"></span>
-                                Available for Freelance & Full-time Roles
-                            </motion.span>
+                            {/* Live Status Badge */}
+                            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 shadow-sm backdrop-blur-md">
+                                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
+                                <span className="h-2 w-2 rounded-full bg-emerald-500 -ml-3"></span>
+                                <span className="text-cyan-600 dark:text-cyan-400 font-mono font-semibold">Available for Hire</span>
+                                <span className="text-slate-300 dark:text-slate-600">|</span>
+                                <span>Software Engineer & Business Systems</span>
+                            </div>
 
-                            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-none text-slate-900 dark:text-white">
-                                Hi, I am <span className="bg-gradient-to-r from-indigo-600 to-violet-650 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">{developerName}</span>
-                                <br />
-                                <span className="inline-block mt-3 min-h-[55px] text-slate-800 dark:text-slate-100 font-bold">
-                                    I build <span className="text-indigo-600 dark:text-indigo-400 underline decoration-indigo-500/30">{typedText}</span>
-                                    <span className="animate-pulse font-normal">|</span>
-                                </span>
+                            {/* Main Hero Heading */}
+                            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-950 dark:text-white leading-[1.12]">
+                                Software Engineer Building <br className="hidden sm:inline" />
+                                <span className="bg-gradient-to-r from-cyan-500 via-teal-500 to-indigo-600 dark:from-cyan-400 dark:via-teal-300 dark:to-indigo-400 bg-clip-text text-transparent">
+                                    Digital Solutions
+                                </span> <br className="hidden sm:inline" />
+                                for Real-World Businesses.
                             </h1>
 
-                            <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-medium">
-                                {settings?.short_intro || 'Experienced Full Stack developer specializing in enterprise apps.'}
+                            {/* Animated Sub-Heading Role */}
+                            <div className="h-8 flex items-center justify-center lg:justify-start gap-2 font-mono text-lg text-slate-600 dark:text-slate-400">
+                                <span className="text-cyan-600 dark:text-cyan-400 font-semibold">{'>'}</span>
+                                <span className="text-slate-900 dark:text-slate-200 font-medium">{typedTitle}</span>
+                                <span className="inline-block w-2 h-5 bg-cyan-500 dark:bg-cyan-400 animate-pulse"></span>
+                            </div>
+
+                            {/* Professional Description */}
+                            <p className="text-slate-600 dark:text-slate-400 text-base sm:text-lg max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                                {settings?.hero_description || 'I design and develop modern web applications, business management systems and automation solutions that help organizations simplify operations, improve productivity and scale efficiently.'}
                             </p>
 
-                            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-                                <Link
-                                    href={route('projects.index')}
-                                    className="w-full sm:w-auto inline-flex items-center justify-center px-7 py-3.5 border border-transparent text-base font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 shadow-lg shadow-indigo-600/20 dark:shadow-indigo-500/10 hover:shadow-indigo-600/30 hover:-translate-y-0.5 transition-all duration-300 gap-2 cursor-pointer"
-                                >
-                                    View Projects <ArrowRight className="h-4.5 w-4.5" />
-                                </Link>
-
+                            {/* Primary Action Buttons */}
+                            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
                                 <a
-                                    href={route('resume.download')}
-                                    className="w-full sm:w-auto inline-flex items-center justify-center px-7 py-3.5 border border-slate-200 dark:border-slate-800 hover:border-slate-350 dark:hover:border-slate-700 text-base font-semibold rounded-xl text-slate-700 dark:text-slate-250 bg-white dark:bg-slate-900 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-850 hover:-translate-y-0.5 transition-all duration-300 gap-2 cursor-pointer"
+                                    href="#featured-projects"
+                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 text-base font-semibold text-slate-950 bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 rounded-xl shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 hover:-translate-y-0.5 transition-all cursor-pointer"
                                 >
-                                    Download Resume <Download className="h-4.5 w-4.5" />
+                                    View My Work
+                                    <ArrowRight className="h-4 w-4" />
+                                </a>
+                                <a
+                                    href="#contact"
+                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 text-base font-semibold text-slate-700 dark:text-slate-200 bg-white hover:bg-slate-100 dark:bg-slate-900/80 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 rounded-xl shadow-xs transition-all cursor-pointer"
+                                >
+                                    Let's Work Together
                                 </a>
                             </div>
+
+                            {/* Trust badges */}
+                            <div className="pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-xs font-mono text-slate-500 dark:text-slate-400">
+                                <div className="flex items-center gap-1.5">
+                                    <CheckCircle2 className="h-4 w-4 text-cyan-500 dark:text-cyan-400" />
+                                    <span>Controller-Service-Model</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <CheckCircle2 className="h-4 w-4 text-cyan-500 dark:text-cyan-400" />
+                                    <span>Spatie RBAC Protected</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <CheckCircle2 className="h-4 w-4 text-cyan-500 dark:text-cyan-400" />
+                                    <span>Zero Raw SQL • Eloquent Only</span>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Image Col */}
-                        <div className="lg:col-span-5 flex justify-center relative">
-                            <motion.div 
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: 0.2 }}
-                                className="relative h-72 w-72 sm:h-80 sm:w-80 md:h-[400px] md:w-[400px] flex items-center justify-center"
-                            >
-                                {/* Glow behind */}
-                                <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-indigo-500/20 to-violet-500/20 blur-2xl"></div>
-                                {/* Double animated rings */}
-                                <div className="absolute inset-0 rounded-full border border-dashed border-indigo-500/30 dark:border-indigo-400/20 animate-spin-[20s] duration-1000"></div>
-                                <div className="absolute inset-4 rounded-full border border-violet-500/20 dark:border-violet-400/10 animate-spin-reverse-[15s]"></div>
-                                {/* Core avatar container */}
-                                <div className="relative h-64 w-64 sm:h-72 sm:w-72 md:h-80 md:w-80 rounded-full border-4 border-white dark:border-slate-900 shadow-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 bg-gradient-to-tr from-indigo-50/50 to-violet-50/50 dark:from-slate-900 dark:to-slate-850">
-                                    <img 
-                                        src="/assets/avatar.png" 
-                                        alt={developerName} 
-                                        className="h-full w-full object-cover transform hover:scale-105 transition-transform duration-500"
-                                    />
+                        {/* Right Column: Interactive Technology Display */}
+                        <div className="lg:col-span-5 relative flex justify-center items-center">
+                            <div className="relative w-full max-w-md p-6 rounded-2xl bg-white dark:bg-gradient-to-b dark:from-slate-900 dark:to-slate-950 border border-slate-200 dark:border-slate-800 shadow-xl dark:shadow-2xl backdrop-blur-xl">
+                                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-4 mb-5">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="h-3 w-3 rounded-full bg-rose-500/80"></div>
+                                        <div className="h-3 w-3 rounded-full bg-amber-500/80"></div>
+                                        <div className="h-3 w-3 rounded-full bg-emerald-500/80"></div>
+                                    </div>
+                                    <span className="text-xs font-mono text-slate-500">production_architecture.php</span>
                                 </div>
 
-                                {/* Floating Badges */}
-                                <motion.div 
-                                    animate={{ y: [0, -10, 0] }}
-                                    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                                    className="absolute -top-4 -left-4 p-3 rounded-2xl bg-white/85 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-lg flex items-center gap-2"
-                                >
-                                    <div className="h-8 w-8 rounded-lg bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                                        <Cpu className="h-4.5 w-4.5" />
-                                    </div>
-                                    <div className="text-left">
-                                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Backend</p>
-                                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Laravel Expert</p>
-                                    </div>
-                                </motion.div>
+                                {/* Code Snippet Simulation */}
+                                <div className="space-y-2 font-mono text-xs text-slate-800 dark:text-slate-300 leading-relaxed bg-slate-100 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800/60">
+                                    <p className="text-slate-400 dark:text-slate-500">// Enterprise Service Architecture</p>
+                                    <p>
+                                        <span className="text-cyan-600 dark:text-cyan-400 font-bold">class</span> <span className="text-emerald-600 dark:text-emerald-400 font-semibold">LeadDistributionService</span>
+                                    </p>
+                                    <p className="pl-4">
+                                        <span className="text-cyan-600 dark:text-cyan-400 font-bold">public function</span> <span className="text-amber-600 dark:text-amber-300">processWebhook</span>(<span className="text-indigo-600 dark:text-indigo-300">$payload</span>)
+                                    </p>
+                                    <p className="pl-8 text-slate-600 dark:text-slate-400">
+                                        $lead = $this-{'>'}<span className="text-indigo-600 dark:text-indigo-400">ingest</span>($payload);<br />
+                                        $agent = $this-{'>'}<span className="text-indigo-600 dark:text-indigo-400">routeRoundRobin</span>($lead);<br />
+                                        $this-{'>'}<span className="text-indigo-600 dark:text-indigo-400">notifyWhatsApp</span>($agent, $lead);<br />
+                                        <span className="text-rose-600 dark:text-rose-400 font-bold">return</span> $lead;
+                                    </p>
+                                </div>
 
-                                <motion.div 
-                                    animate={{ y: [0, 10, 0] }}
-                                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                                    className="absolute -bottom-4 -right-4 p-3 rounded-2xl bg-white/85 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-lg flex items-center gap-2"
-                                >
-                                    <div className="h-8 w-8 rounded-lg bg-violet-50 dark:bg-violet-950 flex items-center justify-center text-violet-600 dark:text-violet-400">
-                                        <Atom className="h-4.5 w-4.5" />
-                                    </div>
-                                    <div className="text-left">
-                                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Frontend</p>
-                                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200">React Dev</p>
-                                    </div>
-                                </motion.div>
-
-                                <motion.div 
-                                    animate={{ x: [0, 8, 0] }}
-                                    transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                                    className="absolute top-1/2 -right-8 p-2.5 rounded-2xl bg-white/85 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-lg flex items-center gap-2"
-                                >
-                                    <div className="h-7 w-7 rounded-lg bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center text-emerald-600 dark:text-emerald-450">
-                                        <Briefcase className="h-4 w-4" />
-                                    </div>
-                                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{settings?.years_of_experience || '5'}+ Yrs Exp</p>
-                                </motion.div>
-                            </motion.div>
+                                {/* Technology Pill Badges */}
+                                <div className="mt-5 grid grid-cols-2 gap-2.5 pt-2">
+                                    {[
+                                        { label: 'Laravel 12', color: 'border-rose-500/30 text-rose-600 dark:text-rose-300 bg-rose-500/10' },
+                                        { label: 'React 19 & Inertia', color: 'border-cyan-500/30 text-cyan-600 dark:text-cyan-300 bg-cyan-500/10' },
+                                        { label: 'MySQL Architecture', color: 'border-amber-500/30 text-amber-600 dark:text-amber-300 bg-amber-500/10' },
+                                        { label: 'Enterprise ERP', color: 'border-indigo-500/30 text-indigo-600 dark:text-indigo-300 bg-indigo-500/10' },
+                                        { label: 'Sales CRM & Webhooks', color: 'border-emerald-500/30 text-emerald-600 dark:text-emerald-300 bg-emerald-500/10' },
+                                        { label: 'Workflow Automation', color: 'border-violet-500/30 text-violet-600 dark:text-violet-300 bg-violet-500/10' },
+                                    ].map((badge, idx) => (
+                                        <div
+                                            key={idx}
+                                            className={`px-3 py-2 rounded-xl text-xs font-mono font-medium border flex items-center justify-between ${badge.color}`}
+                                        >
+                                            <span>{badge.label}</span>
+                                            <Check className="h-3 w-3 opacity-70" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* 2. ABOUT SUMMARY SECTION */}
-            <section className="py-24 border-t border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950/30">
+            {/* =========================================================================
+                SECTION 02: HERO STATISTICS
+               ========================================================================= */}
+            <section className="py-10 border-y border-slate-200 dark:border-slate-800/80 bg-slate-100/70 dark:bg-slate-900/40 backdrop-blur-md">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center space-y-3 mb-16">
-                        <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">About Me</span>
-                        <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Biography & Professional Journey</h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-                        {/* Summary details */}
-                        <div className="lg:col-span-7 space-y-6">
-                            <p className="text-lg text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
-                                {settings?.biography || 'I am a passionate software developer.'}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-slate-800">
+                        <div className="pt-4 md:pt-0">
+                            <p className="text-4xl sm:text-5xl font-black font-mono tracking-tight bg-gradient-to-r from-cyan-600 to-teal-600 dark:from-cyan-400 dark:to-teal-300 bg-clip-text text-transparent">
+                                3+
                             </p>
-                            <p className="text-sm text-slate-650 dark:text-slate-400 leading-relaxed border-l-2 border-indigo-500/70 pl-4 italic">
-                                {settings?.professional_summary || 'Highly driven code specialist.'}
+                            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">
+                                Years Experience
                             </p>
-                            <div className="grid grid-cols-2 gap-4 pt-4">
-                                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/60 shadow-sm flex items-start gap-4">
-                                    <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
-                                        <Award className="h-6 w-6" />
-                                    </div>
-                                    <div>
-                                        <h5 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Years of Experience</h5>
-                                        <p className="text-xl font-extrabold text-slate-850 dark:text-slate-200 mt-1">{settings?.years_of_experience || '5'}+ Years</p>
-                                    </div>
-                                </div>
-                                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/60 shadow-sm flex items-start gap-4">
-                                    <div className="p-3 rounded-xl bg-violet-50 dark:bg-violet-950/50 text-violet-650 dark:text-violet-400">
-                                        <Briefcase className="h-6 w-6" />
-                                    </div>
-                                    <div>
-                                        <h5 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Current Position</h5>
-                                        <p className="text-sm font-extrabold text-slate-850 dark:text-slate-200 mt-1.5">{settings?.current_position || 'Senior Engineer'}</p>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
+                        <div className="pt-4 md:pt-0">
+                            <p className="text-4xl sm:text-5xl font-black font-mono tracking-tight bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-300 bg-clip-text text-transparent">
+                                20+
+                            </p>
+                            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">
+                                Projects & Systems
+                            </p>
+                        </div>
+                        <div className="pt-4 md:pt-0">
+                            <p className="text-4xl sm:text-5xl font-black font-mono tracking-tight bg-gradient-to-r from-indigo-600 to-cyan-600 dark:from-indigo-400 dark:to-cyan-300 bg-clip-text text-transparent">
+                                10+
+                            </p>
+                            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">
+                                Business Modules
+                            </p>
+                        </div>
+                        <div className="pt-4 md:pt-0">
+                            <p className="text-4xl sm:text-5xl font-black font-mono tracking-tight bg-gradient-to-r from-amber-600 to-rose-600 dark:from-amber-400 dark:to-rose-300 bg-clip-text text-transparent">
+                                Full-Cycle
+                            </p>
+                            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1">
+                                Dev & Deployment
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-                        {/* Quick Facts */}
-                        <div className="lg:col-span-5">
-                            <div className="rounded-3xl border border-slate-200 dark:border-slate-800 p-7 space-y-6 bg-slate-50/50 dark:bg-slate-900/40 backdrop-blur-sm shadow-md">
-                                <h3 className="font-extrabold text-lg text-slate-850 dark:text-slate-100 flex items-center gap-2">
-                                    <GraduationCap className="h-5 w-5 text-indigo-600 dark:text-indigo-400" /> Quick Specs
-                                </h3>
-                                <ul className="space-y-4 text-sm">
-                                    <li className="flex items-center justify-between pb-3 border-b border-slate-200/60 dark:border-slate-800/80">
-                                        <span className="text-slate-500 dark:text-slate-350 font-bold">Location:</span>
-                                        <span className="font-bold text-slate-800 dark:text-slate-200">{settings?.address || 'Dhaka, Bangladesh'}</span>
-                                    </li>
-                                    <li className="flex items-center justify-between pb-3 border-b border-slate-200/60 dark:border-slate-800/80">
-                                        <span className="text-slate-500 dark:text-slate-350 font-bold">Email:</span>
-                                        <span className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">{settings?.email || 'jahid@example.com'}</span>
-                                    </li>
-                                    <li className="flex items-center justify-between pb-3 border-b border-slate-200/60 dark:border-slate-800/80">
-                                        <span className="text-slate-500 dark:text-slate-350 font-bold">Education:</span>
-                                        <span className="font-bold text-slate-800 dark:text-slate-200">B.Sc. in CSE</span>
-                                    </li>
-                                </ul>
+            {/* =========================================================================
+                SECTION 03: ABOUT SECTION
+               ========================================================================= */}
+            <section id="about" className="py-24 relative">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                        <div className="lg:col-span-7 space-y-6">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 text-xs font-mono font-medium uppercase tracking-wider">
+                                ABOUT JAHID HASAN
+                            </div>
+
+                            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 dark:text-white tracking-tight leading-tight">
+                                Turning Ideas Into <br />
+                                <span className="text-cyan-600 dark:text-cyan-400">Reliable Software</span>
+                            </h2>
+
+                            <p className="text-slate-800 dark:text-slate-300 text-base leading-relaxed">
+                                I’m Jahid Hasan, a Software Engineer passionate about building practical software solutions for businesses and organizations.
+                            </p>
+
+                            <p className="text-slate-600 dark:text-slate-400 text-base leading-relaxed">
+                                My work focuses on developing scalable web applications, business management systems and automation platforms. I enjoy working with complex requirements, designing efficient database structures and turning business processes into simple, reliable digital workflows.
+                            </p>
+
+                            <p className="text-slate-600 dark:text-slate-400 text-base leading-relaxed">
+                                From backend architecture and database design to frontend interfaces and deployment, I focus on building software that is maintainable, secure and ready for real-world production use.
+                            </p>
+
+                            {/* Resume & Career CTAs */}
+                            <div className="pt-2 flex flex-wrap items-center gap-4">
+                                <a
+                                    href={route('resume.download')}
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 transition-all"
+                                >
+                                    <Download className="h-4 w-4" />
+                                    Download Resume
+                                </a>
                                 <Link
                                     href={route('about')}
-                                    className="inline-flex items-center text-sm font-bold text-indigo-600 hover:text-indigo-755 dark:text-indigo-400 dark:hover:text-indigo-300 gap-1.5 transition-colors"
+                                    className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
                                 >
-                                    Read career story <ChevronRight className="h-4.5 w-4.5" />
+                                    Full Career Journey <ChevronRight className="h-4 w-4" />
                                 </Link>
                             </div>
                         </div>
+
+                        {/* Right Column: Key Areas */}
+                        <div className="lg:col-span-5">
+                            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                                <h3 className="text-sm font-mono text-cyan-600 dark:text-cyan-400 font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 pb-3">
+                                    Core Competency Pillars
+                                </h3>
+                                <div className="space-y-3">
+                                    {[
+                                        { title: 'Backend Development', desc: 'Controller-Service-Model, Form Requests, PHP 8.3 & Laravel 12', icon: Terminal },
+                                        { title: 'Database Architecture', desc: 'MySQL design, indexing, foreign keys & query optimization', icon: Database },
+                                        { title: 'Business Software', desc: 'Custom ERP, CRM, HRM, Inventory & Accounting platforms', icon: Briefcase },
+                                        { title: 'Frontend Interfaces', desc: 'React 19, Inertia.js, Tailwind CSS & seamless SPAs', icon: Atom },
+                                        { title: 'API & Integration', desc: 'REST APIs, Facebook Lead Webhooks, WhatsApp Cloud API', icon: Link2 },
+                                        { title: 'System Automation', desc: 'Automated lead distribution, scheduled cron jobs & alerts', icon: Workflow },
+                                        { title: 'Server & Deployment', desc: 'Linux CLI, cPanel, Cloudways, VPS & Git CI/CD pipelines', icon: Server },
+                                    ].map((item, idx) => {
+                                        const Icon = item.icon;
+                                        return (
+                                            <div key={idx} className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                                <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-cyan-600 dark:text-cyan-400 shrink-0">
+                                                    <Icon className="h-4 w-4" />
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white">{item.title}</h4>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400">{item.desc}</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            {/* 3. SKILLS SECTION */}
-            <section className="py-24 border-t border-slate-200 dark:border-slate-900 bg-slate-50/30 dark:bg-slate-950/20">
+            {/* =========================================================================
+                SECTION 04: EXPERTISE SECTION
+               ========================================================================= */}
+            <section id="expertise" className="py-24 bg-slate-100/50 dark:bg-slate-900/30 border-t border-slate-200 dark:border-slate-800/80">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center space-y-3 mb-16">
-                        <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Core Expertise</span>
-                        <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Technical Skills</h2>
+                    <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 text-xs font-mono font-medium uppercase tracking-wider">
+                            WHAT I DO
+                        </div>
+                        <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 dark:text-white tracking-tight">
+                            Specialized Engineering Capabilities
+                        </h2>
+                        <p className="text-slate-600 dark:text-slate-400 text-base">
+                            Structured around three core disciplines designed to solve operational business challenges and drive revenue growth.
+                        </p>
                     </div>
 
-                    {/* Skill Category Tabs */}
-                    <div className="flex flex-wrap justify-center gap-2 mb-12">
-                        <button
-                            onClick={() => setActiveCategory('all')}
-                            className={`px-5 py-2 rounded-full text-xs font-bold border transition-all duration-300 cursor-pointer ${
-                                activeCategory === 'all'
-                                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                                    : 'bg-white dark:bg-slate-900 border-slate-250 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-350 dark:hover:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
-                            }`}
-                        >
-                            All Skills
-                        </button>
-                        {Object.entries(skillCategories).map(([key, label]) => {
-                            const hasSkills = groupedSkills[key] && groupedSkills[key].length > 0;
-                            if (!hasSkills) return null;
-                            return (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {/* 01 Business Software */}
+                        <div className="p-8 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 hover:border-cyan-500/50 dark:hover:border-cyan-500/40 transition-all hover:-translate-y-1 shadow-sm dark:shadow-lg group">
+                            <div className="h-12 w-12 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center font-mono font-bold text-lg mb-6 group-hover:scale-110 transition-transform">
+                                01
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
+                                Business Software
+                            </h3>
+                            <p className="text-slate-600 dark:text-slate-400 text-sm mb-6 leading-relaxed">
+                                Custom software solutions designed around specific business workflows and operational requirements.
+                            </p>
+                            <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-5">
+                                <span className="text-xs font-mono text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-2">Systems Engineered:</span>
+                                <div className="flex flex-wrap gap-2">
+                                    {['ERP', 'CRM', 'HRM', 'Accounting', 'Inventory', 'LMS', 'Management Portals'].map((tag, i) => (
+                                        <span key={i} className="px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 02 Web Application Development */}
+                        <div className="p-8 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 hover:border-cyan-500/50 dark:hover:border-cyan-500/40 transition-all hover:-translate-y-1 shadow-sm dark:shadow-lg group">
+                            <div className="h-12 w-12 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-mono font-bold text-lg mb-6 group-hover:scale-110 transition-transform">
+                                02
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
+                                Web Applications
+                            </h3>
+                            <p className="text-slate-600 dark:text-slate-400 text-sm mb-6 leading-relaxed">
+                                Modern and responsive web applications built with clean architecture, fast page loads, and scalable technologies.
+                            </p>
+                            <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-5">
+                                <span className="text-xs font-mono text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-2">Platforms Built:</span>
+                                <div className="flex flex-wrap gap-2">
+                                    {['SaaS Applications', 'Admin Panels', 'Customer Portals', 'E-commerce Platforms', 'Corporate Web Apps'].map((tag, i) => (
+                                        <span key={i} className="px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 03 Automation & Integration */}
+                        <div className="p-8 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 hover:border-cyan-500/50 dark:hover:border-cyan-500/40 transition-all hover:-translate-y-1 shadow-sm dark:shadow-lg group">
+                            <div className="h-12 w-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-mono font-bold text-lg mb-6 group-hover:scale-110 transition-transform">
+                                03
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
+                                Automation & Integration
+                            </h3>
+                            <p className="text-slate-600 dark:text-slate-400 text-sm mb-6 leading-relaxed">
+                                Connecting systems and automating repetitive business processes to reduce human error and speed up response times.
+                            </p>
+                            <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-5">
+                                <span className="text-xs font-mono text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-2">Integrations:</span>
+                                <div className="flex flex-wrap gap-2">
+                                    {['Facebook Lead Ads', 'WhatsApp Cloud API', 'Lead Distribution', 'Automated Alerts', 'Payment Gateways'].map((tag, i) => (
+                                        <span key={i} className="px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* =========================================================================
+                SECTION 05: FEATURED PROJECTS (Selected Work)
+               ========================================================================= */}
+            <section id="featured-projects" className="py-24 relative">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+                        <div className="space-y-3">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 text-xs font-mono font-medium uppercase tracking-wider">
+                                SELECTED WORK
+                            </div>
+                            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 dark:text-white tracking-tight">
+                                Featured Systems & Applications
+                            </h2>
+                            <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base max-w-2xl">
+                                A selection of production systems and applications I've engineered to solve real-world business and operational challenges.
+                            </p>
+                        </div>
+
+                        {/* Category Filter Pills */}
+                        <div className="flex flex-wrap gap-2">
+                            {['all', 'ERP', 'CRM', 'LMS', 'HRM', 'E-Commerce'].map((cat) => (
                                 <button
-                                    key={key}
-                                    onClick={() => setActiveCategory(key)}
-                                    className={`px-5 py-2 rounded-full text-xs font-bold border transition-all duration-300 cursor-pointer ${
-                                        activeCategory === key
-                                            ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                                            : 'bg-white dark:bg-slate-900 border-slate-250 dark:border-slate-800 text-slate-650 dark:text-slate-300 hover:border-slate-350 dark:hover:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                    key={cat}
+                                    onClick={() => setSelectedProjectCategory(cat)}
+                                    className={`px-3.5 py-1.5 rounded-lg text-xs font-mono uppercase tracking-wider font-semibold transition-all cursor-pointer ${
+                                        selectedProjectCategory === cat
+                                            ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
+                                            : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-950 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700'
                                     }`}
                                 >
-                                    {label}
+                                    {cat}
                                 </button>
-                            );
-                        })}
-                    </div>
-
-                    {/* Skills Grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                        <AnimatePresence mode="popLayout">
-                            {(activeCategory === 'all' 
-                                ? skills 
-                                : skills.filter(skill => skill.category === activeCategory)
-                            ).map((skill) => {
-                                const IconComponent = iconMap[skill.icon] || Code2;
-                                return (
-                                    <motion.div
-                                        layout
-                                        initial={{ opacity: 0, scale: 0.95 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.95 }}
-                                        transition={{ duration: 0.25 }}
-                                        key={skill.id}
-                                        className="p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800/80 bg-white dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900 hover:shadow-xl hover:border-indigo-500/40 dark:hover:border-indigo-400/40 transition-all duration-300 flex flex-col justify-between group"
-                                    >
-                                        <div className="flex items-center justify-between mb-4">
-                                            <div className="p-2.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform duration-300">
-                                                <IconComponent className="h-5 w-5" />
-                                            </div>
-                                            <span className="text-[9px] uppercase tracking-wider font-extrabold text-slate-500 dark:text-slate-400">
-                                                {skillCategories[skill.category] || skill.category}
-                                            </span>
-                                        </div>
-                                        <div>
-                                            <h4 className="font-extrabold text-base text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
-                                                {skill.name}
-                                            </h4>
-                                            <div className="flex items-center gap-1.5 mt-2">
-                                                <span className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded font-bold">
-                                                    {skill.years_of_experience} Yrs
-                                                </span>
-                                                <span className="text-xs bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded font-extrabold uppercase tracking-wider">
-                                                    {getSkillTier(skill.percentage)}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                );
-                            })}
-                        </AnimatePresence>
-                    </div>
-                </div>
-            </section>
-
-            {/* 4. SERVICES SECTION */}
-            <section className="py-24 border-t border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950/30">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center space-y-3 mb-16">
-                        <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Offerings</span>
-                        <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Services Provided</h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {services.map((service) => {
-                            const ServiceIcon = iconMap[service.icon] || Cpu;
-                            return (
-                                <div 
-                                    key={service.id}
-                                    className="group p-7 rounded-3xl border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900/20 hover:bg-slate-50 dark:hover:bg-slate-900/50 hover:shadow-xl hover:border-indigo-500/30 dark:hover:border-indigo-400/20 transition-all duration-300"
-                                >
-                                    <div className="h-12 w-12 rounded-2xl bg-indigo-50 text-indigo-650 dark:bg-indigo-950/50 dark:text-indigo-400 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300 shadow-sm">
-                                        <ServiceIcon className="h-5.5 w-5.5" />
-                                    </div>
-                                    <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{service.name}</h3>
-                                    <p className="text-sm sm:text-base text-slate-600 dark:text-slate-350 leading-relaxed">
-                                        {service.description}
-                                    </p>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            </section>
-
-            {/* 5. FEATURED PROJECTS SECTION */}
-            <section className="py-24 border-t border-slate-200 dark:border-slate-900">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-16">
-                        <div className="space-y-2 text-center sm:text-left">
-                            <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Showcase</span>
-                            <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Featured Projects</h2>
+                            ))}
                         </div>
-                        <Link 
-                            href={route('projects.index')}
-                            className="inline-flex items-center text-sm font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 gap-1.5 transition-colors"
-                        >
-                            View all projects <ArrowRight className="h-4.5 w-4.5" />
-                        </Link>
                     </div>
 
+                    {/* Projects Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {featuredProjects.map((project) => (
-                            <div 
+                        {filteredProjects.map((project) => (
+                            <div
                                 key={project.id}
-                                className="group flex flex-col rounded-3xl border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1.5"
+                                className="flex flex-col rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 hover:border-cyan-500/50 dark:hover:border-cyan-500/40 overflow-hidden shadow-sm dark:shadow-lg transition-all hover:-translate-y-1.5 group"
                             >
-                                <div className="relative aspect-video bg-slate-100 dark:bg-slate-950 overflow-hidden">
-                                    {project.thumbnail ? (
-                                        <img 
-                                            src={project.thumbnail} 
-                                            alt={project.name} 
-                                            className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                        />
-                                    ) : (
-                                        <div className="h-full w-full flex items-center justify-center text-slate-400 text-sm">
-                                            <span>No Thumbnail Available</span>
+                                {/* Project Card Visual */}
+                                <div className="relative h-48 bg-slate-100 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-center overflow-hidden p-6">
+                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-100 dark:from-slate-950 via-slate-100/40 dark:via-slate-950/40 to-transparent z-10 pointer-events-none" />
+                                    <div className="z-20 text-center space-y-2">
+                                        <div className="inline-flex items-center justify-center p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-cyan-600 dark:text-cyan-400 group-hover:scale-110 transition-transform shadow-xs">
+                                            <Code2 className="h-6 w-6" />
                                         </div>
-                                    )}
-                                    <span className="absolute top-3 left-3 bg-indigo-600/90 text-white text-[10px] uppercase font-extrabold tracking-widest px-3 py-1 rounded-lg shadow-md backdrop-blur-sm border border-white/10">
-                                        {project.category}
-                                    </span>
+                                        <div className="text-xs font-mono font-semibold text-cyan-700 dark:text-cyan-300 uppercase tracking-widest">
+                                            {project.category}
+                                        </div>
+                                    </div>
+
+                                    {/* Category Status Pill */}
+                                    <div className="absolute top-3 left-3 z-20">
+                                        <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-medium bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 backdrop-blur-md">
+                                            {project.status || 'Production'}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="p-6 flex-grow flex flex-col justify-between">
-                                    <div className="space-y-3.5">
-                                        <h3 className="font-bold text-lg text-slate-850 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+
+                                {/* Project Card Body */}
+                                <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                                    <div className="space-y-2">
+                                        <h3 className="text-xl font-bold text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
                                             {project.name}
                                         </h3>
-                                        <p className="text-sm text-slate-500 dark:text-slate-350 line-clamp-2 leading-relaxed">
-                                            {project.description}
+                                        <p className="text-slate-600 dark:text-slate-400 text-xs line-clamp-3 leading-relaxed">
+                                            {project.description || project.overview}
                                         </p>
-                                        <div className="flex flex-wrap gap-1.5 pt-1">
-                                            {project.technology_stack?.slice(0, 4).map((tech, idx) => (
-                                                <span key={idx} className="text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-650 dark:text-slate-300 border border-slate-200/40 dark:border-slate-700/30 px-2 py-0.5 rounded">
+                                    </div>
+
+                                    {/* Tech Stack Pills */}
+                                    <div className="space-y-3 pt-2">
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {Array.isArray(project.technology_stack) && project.technology_stack.slice(0, 4).map((tech, i) => (
+                                                <span key={i} className="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/50">
                                                     {tech}
                                                 </span>
                                             ))}
+                                            {Array.isArray(project.technology_stack) && project.technology_stack.length > 4 && (
+                                                <span className="px-1.5 py-0.5 rounded text-[11px] font-mono bg-slate-100 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500">
+                                                    +{project.technology_stack.length - 4}
+                                                </span>
+                                            )}
                                         </div>
-                                    </div>
-                                    <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs font-bold">
-                                        <Link 
-                                            href={route('projects.show', project.slug)}
-                                            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline"
-                                        >
-                                            View Details
-                                        </Link>
-                                        <div className="flex space-x-3.5">
+
+                                        {/* Case Study Action Button */}
+                                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+                                            <Link
+                                                href={route('projects.show', project.slug)}
+                                                className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 group-hover:translate-x-0.5 transition-all"
+                                            >
+                                                View Case Study →
+                                            </Link>
                                             {project.github && (
-                                                <a href={project.github} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-                                                    GitHub
-                                                </a>
-                                            )}
-                                            {project.live_demo && (
-                                                <a href={project.live_demo} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-                                                    Live Demo
+                                                <a
+                                                    href={project.github}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                                                    title="GitHub Repository"
+                                                >
+                                                    <GithubIcon className="h-4 w-4" />
                                                 </a>
                                             )}
                                         </div>
@@ -539,44 +565,224 @@ export default function Home({ skills, experiences, services, featuredProjects, 
                             </div>
                         ))}
                     </div>
+
+                    <div className="mt-12 text-center">
+                        <Link
+                            href={route('projects.index')}
+                            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:text-slate-900 dark:hover:text-white shadow-xs transition-colors"
+                        >
+                            Browse All Architecture & Case Studies
+                            <ChevronRight className="h-4 w-4" />
+                        </Link>
+                    </div>
                 </div>
             </section>
 
-            {/* 6. TIMELINE EXPERIENCE */}
-            <section className="py-24 border-t border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950/30">
+            {/* =========================================================================
+                SECTION 06: SYSTEM ARCHITECTURE BLUEPRINT
+               ========================================================================= */}
+            <section className="py-20 bg-slate-100/50 dark:bg-slate-900/40 border-y border-slate-200 dark:border-slate-800/80">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center space-y-3 mb-16">
-                        <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Milestones</span>
-                        <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Professional History</h2>
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+                        <div className="lg:col-span-5 space-y-4">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 text-xs font-mono font-medium uppercase tracking-wider">
+                                SYSTEM ARCHITECTURE
+                            </div>
+                            <h2 className="text-3xl font-extrabold text-slate-950 dark:text-white tracking-tight">
+                                How I Structure Enterprise Systems
+                            </h2>
+                            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                Every business platform I develop follows strict architectural boundaries. Controllers never execute business logic or database queries; instead, requests flow through Form Request validation into dedicated Service classes and Eloquent models.
+                            </p>
+                            <div className="pt-2 space-y-2.5 text-xs font-mono text-slate-700 dark:text-slate-300">
+                                <div className="flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-emerald-500" />
+                                    <span>Atomic database transactions prevent race conditions</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-emerald-500" />
+                                    <span>Asynchronous queue workers handle burst webhooks</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-emerald-500" />
+                                    <span>Composite database indexing guarantees fast reporting</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Visual Workflow Diagram */}
+                        <div className="lg:col-span-7 p-6 rounded-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800/90 shadow-lg dark:shadow-2xl font-mono text-xs">
+                            <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+                                <span>Multi-Channel Lead Automation Pipeline</span>
+                                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">LIVE FLOW</span>
+                            </div>
+
+                            <div className="space-y-3 text-slate-700 dark:text-slate-300">
+                                <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="h-2 w-2 rounded-full bg-cyan-500"></div>
+                                        <span>01. Facebook Lead Ad Trigger / API Webhook</span>
+                                    </div>
+                                    <span className="text-slate-400 dark:text-slate-500 font-sans text-[11px]">Instant Payload</span>
+                                </div>
+
+                                <div className="text-center text-cyan-600 dark:text-cyan-400">↓</div>
+
+                                <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="h-2 w-2 rounded-full bg-indigo-500"></div>
+                                        <span>02. Lead Ingestion Service (Verification & De-duplication)</span>
+                                    </div>
+                                    <span className="text-slate-400 dark:text-slate-500 font-sans text-[11px]">Sub-second</span>
+                                </div>
+
+                                <div className="text-center text-cyan-600 dark:text-cyan-400">↓</div>
+
+                                <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="h-2 w-2 rounded-full bg-amber-500"></div>
+                                        <span>03. Intelligent Lead Distribution Engine (Round-Robin)</span>
+                                    </div>
+                                    <span className="text-slate-400 dark:text-slate-500 font-sans text-[11px]">Automated</span>
+                                </div>
+
+                                <div className="text-center text-cyan-600 dark:text-cyan-400">↓</div>
+
+                                <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+                                        <span>04. Salesperson Notification (WhatsApp / SMS / Portal)</span>
+                                    </div>
+                                    <span className="text-emerald-600 dark:text-emerald-400 font-sans text-[11px]">{'<'}60s Response</span>
+                                </div>
+
+                                <div className="text-center text-cyan-600 dark:text-cyan-400">↓</div>
+
+                                <div className="p-3 rounded-lg bg-emerald-50 dark:bg-gradient-to-r dark:from-emerald-950/40 dark:to-cyan-950/40 border border-emerald-500/30 flex items-center justify-between text-emerald-800 dark:text-emerald-300 font-semibold">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                        <span>05. Call Log, Quotation & Deal Conversion</span>
+                                    </div>
+                                    <span>High Conversion</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* =========================================================================
+                SECTION 07: TECHNOLOGIES I WORK WITH
+               ========================================================================= */}
+            <section className="py-24">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 text-xs font-mono font-medium uppercase tracking-wider">
+                            TECH STACK
+                        </div>
+                        <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 dark:text-white tracking-tight">
+                            Technologies I Work With
+                        </h2>
+                        <p className="text-slate-600 dark:text-slate-400 text-base">
+                            Curated, modern, and production-tested technologies chosen for reliability, security, and performance.
+                        </p>
                     </div>
 
-                    <div className="relative border-l border-slate-200 dark:border-slate-800 max-w-3xl mx-auto space-y-12 pl-8">
-                        {experiences.map((exp) => (
-                            <div key={exp.id} className="relative">
-                                {/* Pulsate Dot indicator */}
-                                <div className="absolute -left-[42px] top-1.5 h-5 w-5 rounded-full border-4 border-white dark:border-slate-950 bg-indigo-600 dark:bg-indigo-500 shadow-md ring-4 ring-indigo-500/20" />
-                                
-                                <div className="p-6 rounded-3xl border border-slate-200/60 dark:border-slate-800 bg-white/50 dark:bg-slate-900/30 shadow-sm hover:shadow-md transition-all space-y-3">
-                                    <div className="flex flex-wrap items-center justify-between gap-2">
-                                        <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 px-3 py-1 rounded-lg">
-                                            {new Date(exp.start_date).getFullYear()} - {exp.is_current ? 'Present' : new Date(exp.end_date).getFullYear()}
-                                        </span>
-                                        <span className="text-xs text-slate-500 dark:text-slate-400 font-bold flex items-center gap-1">
-                                            <MapPin className="h-3.5 w-3.5" /> {exp.location}
-                                        </span>
-                                    </div>
-                                    <h3 className="text-xl font-extrabold text-slate-850 dark:text-slate-100">{exp.position}</h3>
-                                    <p className="text-sm font-bold text-slate-500 dark:text-slate-400">{exp.company}</p>
-                                    <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 whitespace-pre-line leading-relaxed pt-1">
-                                        {exp.responsibilities}
-                                    </p>
-                                    <div className="flex flex-wrap gap-1.5 pt-2">
-                                        {exp.technologies?.map((tech, idx) => (
-                                            <span key={idx} className="text-xs font-bold bg-slate-100 dark:bg-slate-850 text-slate-600 dark:text-slate-350 px-2.5 py-0.5 rounded">
-                                                {tech}
-                                            </span>
-                                        ))}
-                                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {/* Backend */}
+                        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
+                            <div className="flex items-center gap-2 text-cyan-600 dark:text-cyan-400 font-mono text-sm font-semibold uppercase tracking-wider">
+                                <Terminal className="h-4 w-4" />
+                                <span>Backend</span>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {['PHP 8.3+', 'Laravel 12', 'REST APIs', 'Queue Workers', 'Task Scheduler', 'Authentication'].map((t, i) => (
+                                    <span key={i} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60">
+                                        {t}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Frontend */}
+                        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
+                            <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-mono text-sm font-semibold uppercase tracking-wider">
+                                <Atom className="h-4 w-4" />
+                                <span>Frontend</span>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {['React 19', 'Inertia.js', 'Tailwind CSS', 'JavaScript (ES6+)', 'Bootstrap', 'Framer Motion'].map((t, i) => (
+                                    <span key={i} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60">
+                                        {t}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Database */}
+                        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
+                            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-mono text-sm font-semibold uppercase tracking-wider">
+                                <Database className="h-4 w-4" />
+                                <span>Database</span>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {['MySQL 8.0+', 'Database Normalization', 'Indexing Strategy', 'Query Optimization', 'Eloquent ORM'].map((t, i) => (
+                                    <span key={i} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60">
+                                        {t}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Tools & Standards */}
+                        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
+                            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-mono text-sm font-semibold uppercase tracking-wider">
+                                <Server className="h-4 w-4" />
+                                <span>Tools & Standards</span>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {['Git & GitHub', 'Linux CLI', 'cPanel / VPS', 'Cloudways', 'Spatie RBAC', 'Postman'].map((t, i) => (
+                                    <span key={i} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700/60">
+                                        {t}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* =========================================================================
+                SECTION 08: DEVELOPMENT PHILOSOPHY
+               ========================================================================= */}
+            <section className="py-24 bg-slate-100/50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-800/80">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 text-xs font-mono font-medium uppercase tracking-wider">
+                            DEVELOPMENT PHILOSOPHY
+                        </div>
+                        <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 dark:text-white tracking-tight">
+                            How I Build Software
+                        </h2>
+                        <p className="text-slate-600 dark:text-slate-400 text-base">
+                            A structured, disciplined engineering methodology to ensure applications are scalable, maintainable, and bug-free.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
+                        {[
+                            { num: '01', title: 'Understand', desc: 'Deeply understand the business problem, target users, and operational workflow before writing code.' },
+                            { num: '02', title: 'Plan', desc: 'Design normalized database tables, foreign keys, service boundaries, and feature flows.' },
+                            { num: '03', title: 'Build', desc: 'Develop using Controller-Service-Model architecture with clean, maintainable, and scalable standards.' },
+                            { num: '04', title: 'Test', desc: 'Write automated feature and unit tests to validate validation, transactions, and edge cases.' },
+                            { num: '05', title: 'Optimize', desc: 'Eliminate N+1 queries, add composite indexes, and optimize response times for smooth UX.' },
+                            { num: '06', title: 'Deploy', desc: 'Deploy to production VPS or hosting with SSL, queue workers, backups, and monitoring.' },
+                        ].map((step, i) => (
+                            <div key={i} className="p-6 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 flex flex-col justify-between space-y-4 hover:border-cyan-500/40 shadow-xs transition-colors">
+                                <div>
+                                    <span className="text-2xl font-mono font-black text-cyan-600 dark:text-cyan-400/80 block mb-2">{step.num}</span>
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{step.title}</h3>
+                                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{step.desc}</p>
                                 </div>
                             </div>
                         ))}
@@ -584,43 +790,211 @@ export default function Home({ skills, experiences, services, featuredProjects, 
                 </div>
             </section>
 
-            {/* 7. TESTIMONIALS */}
-            {testimonials.length > 0 && (
-                <section className="py-24 border-t border-slate-200 dark:border-slate-900">
+            {/* =========================================================================
+                SECTION 09: PROFESSIONAL EXPERIENCE
+               ========================================================================= */}
+            <section id="experience" className="py-24">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="max-w-3xl space-y-4 mb-16">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 text-xs font-mono font-medium uppercase tracking-wider">
+                            CAREER TIMELINE
+                        </div>
+                        <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 dark:text-white tracking-tight">
+                            Professional Experience
+                        </h2>
+                        <p className="text-slate-600 dark:text-slate-400 text-base">
+                            Hands-on software engineering delivering high-stakes business systems in active corporate environments.
+                        </p>
+                    </div>
+
+                    <div className="space-y-8">
+                        {experiences && experiences.map((exp, idx) => (
+                            <div
+                                key={exp.id || idx}
+                                className="p-8 rounded-2xl bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800/90 hover:border-slate-300 dark:hover:border-slate-700 transition-all shadow-sm dark:shadow-lg"
+                            >
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6 mb-6">
+                                    <div>
+                                        <div className="flex items-center gap-3">
+                                            <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">{exp.position}</h3>
+                                            {exp.is_current && (
+                                                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
+                                                    Present
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-cyan-600 dark:text-cyan-400 font-mono text-sm mt-1">{exp.company} • {exp.location}</p>
+                                    </div>
+                                    <div className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                                        {exp.start_date} — {exp.end_date || 'Present'}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <h4 className="text-xs font-mono uppercase tracking-widest text-slate-400 dark:text-slate-500">Core Responsibilities & Deliverables:</h4>
+                                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-slate-700 dark:text-slate-300">
+                                        {typeof exp.responsibilities === 'string'
+                                            ? exp.responsibilities.split('\n').filter(Boolean).map((r, i) => (
+                                                <li key={i} className="flex items-start gap-2">
+                                                    <span className="text-cyan-600 dark:text-cyan-400 mt-1">▹</span>
+                                                    <span>{r}</span>
+                                                </li>
+                                            ))
+                                            : null}
+                                    </ul>
+
+                                    {exp.achievements && (
+                                        <div className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 font-mono">
+                                            <span className="text-emerald-600 dark:text-emerald-400 font-bold">Key Achievement: </span>
+                                            {exp.achievements}
+                                        </div>
+                                    )}
+
+                                    {Array.isArray(exp.technologies) && (
+                                        <div className="pt-2 flex flex-wrap gap-2">
+                                            {exp.technologies.map((t, i) => (
+                                                <span key={i} className="px-2.5 py-1 rounded text-xs font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                                    {t}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* =========================================================================
+                SECTION 10: SERVICES
+               ========================================================================= */}
+            <section id="services" className="py-24 bg-slate-100/50 dark:bg-slate-900/30 border-t border-slate-200 dark:border-slate-800/80">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 text-xs font-mono font-medium uppercase tracking-wider">
+                            SERVICES FOR BUSINESSES
+                        </div>
+                        <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 dark:text-white tracking-tight">
+                            Software Solutions for Growing Businesses
+                        </h2>
+                        <p className="text-slate-600 dark:text-slate-400 text-base">
+                            Transforming complex requirements into scalable, reliable digital workflows for startups and enterprises.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {services && services.map((srv, idx) => (
+                            <div
+                                key={srv.id || idx}
+                                className="p-8 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 hover:border-cyan-500/50 dark:hover:border-cyan-500/40 transition-all hover:-translate-y-1 shadow-sm dark:shadow-lg group"
+                            >
+                                <div className="h-12 w-12 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                                    <Code2 className="h-6 w-6" />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
+                                    {srv.name}
+                                </h3>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    {srv.description}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* =========================================================================
+                SECTION 11: CLIENT WORKFLOW
+               ========================================================================= */}
+            <section className="py-20 border-t border-slate-200 dark:border-slate-800/80">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center max-w-2xl mx-auto mb-12">
+                        <span className="text-xs font-mono text-cyan-600 dark:text-cyan-400 uppercase tracking-widest block mb-2">ENGAGEMENT PROCESS</span>
+                        <h2 className="text-3xl font-extrabold text-slate-950 dark:text-white">From Idea to Production</h2>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 text-center font-mono">
+                        {[
+                            { step: '01', title: 'Requirement' },
+                            { step: '02', title: 'Planning' },
+                            { step: '03', title: 'UI/UX' },
+                            { step: '04', title: 'Development' },
+                            { step: '05', title: 'Testing' },
+                            { step: '06', title: 'Deployment' },
+                            { step: '07', title: 'Support' },
+                        ].map((s, i) => (
+                            <div key={i} className="p-4 rounded-xl bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 shadow-xs">
+                                <span className="text-cyan-600 dark:text-cyan-400 font-bold text-sm block mb-1">{s.step}</span>
+                                <span className="text-xs text-slate-800 dark:text-slate-200 font-semibold">{s.title}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* =========================================================================
+                SECTION 12: WHY WORK WITH ME
+               ========================================================================= */}
+            <section className="py-24 bg-slate-100/50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-800/80">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 text-xs font-mono font-medium uppercase tracking-wider">
+                            WHY CHOOSE ME
+                        </div>
+                        <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 dark:text-white tracking-tight">
+                            Business-First Engineering Standards
+                        </h2>
+                        <p className="text-slate-600 dark:text-slate-400 text-base">
+                            Why clients, engineering managers, and teams trust my software development approach.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                        {[
+                            { title: 'Business-Focused', desc: 'I focus on solving the actual operational business problem, not just writing syntax.' },
+                            { title: 'Scalable Architecture', desc: 'Systems are structured to remain maintainable, clean, and extensible as your company grows.' },
+                            { title: 'Clean Development', desc: 'Strict Controller-Service-Model architecture with Form Requests and PSR-12 standard compliance.' },
+                            { title: 'Performance First', desc: 'Database indexes, eager loading, and asset minification are engineered from day one.' },
+                            { title: 'Long-Term Support', desc: 'Software doesn’t end at deployment. I provide reliable maintenance and feature evolution.' },
+                        ].map((item, i) => (
+                            <div key={i} className="p-6 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 space-y-3 shadow-xs">
+                                <div className="h-8 w-8 rounded-lg bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">
+                                    <Check className="h-4 w-4" />
+                                </div>
+                                <h3 className="text-base font-bold text-slate-900 dark:text-white">{item.title}</h3>
+                                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{item.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* =========================================================================
+                SECTION 13: TESTIMONIALS
+               ========================================================================= */}
+            {testimonials && testimonials.length > 0 && (
+                <section className="py-24 border-t border-slate-200 dark:border-slate-800/80">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center space-y-3 mb-16">
-                            <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Reviews</span>
-                            <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Client Testimonials</h2>
+                        <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+                            <span className="text-xs font-mono text-cyan-600 dark:text-cyan-400 uppercase tracking-widest">ENDORSEMENTS</span>
+                            <h2 className="text-3xl font-extrabold text-slate-950 dark:text-white">What Colleagues & Clients Say</h2>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                            {testimonials.map((test) => (
-                                <div 
-                                    key={test.id}
-                                    className="p-7 rounded-3xl border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900/30 flex flex-col justify-between shadow-sm relative overflow-hidden group hover:border-indigo-500/25 transition-all duration-300"
-                                >
-                                    <div className="absolute top-6 right-6 text-indigo-100 dark:text-indigo-950/20 group-hover:text-indigo-200 dark:group-hover:text-indigo-950/30 transition-colors duration-300 pointer-events-none">
-                                        <Quote className="h-16 w-16 transform rotate-180" />
+                            {testimonials.map((t, idx) => (
+                                <div key={idx} className="p-8 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
+                                    <div className="flex gap-1 text-amber-400">
+                                        {[...Array(5)].map((_, i) => (
+                                            <Star key={i} className="h-4 w-4 fill-amber-400" />
+                                        ))}
                                     </div>
-
-                                    <div className="space-y-4 relative z-10">
-                                        <div className="flex text-amber-500 space-x-0.5">
-                                            {[...Array(test.rating)].map((_, i) => (
-                                                <Star key={i} className="h-4.5 w-4.5 fill-current" />
-                                            ))}
-                                        </div>
-                                        <p className="text-sm sm:text-base text-slate-650 dark:text-slate-300 italic leading-relaxed font-medium">
-                                            "{test.feedback}"
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center space-x-3.5 pt-6 mt-6 border-t border-slate-100 dark:border-slate-800 relative z-10">
-                                        <div className="h-10 w-10 rounded-full bg-indigo-500 text-white dark:bg-indigo-950 flex items-center justify-center text-indigo-650 dark:text-indigo-400 font-bold text-sm">
-                                            {test.client_name[0]}
-                                        </div>
-                                        <div>
-                                            <h4 className="font-bold text-sm text-slate-850 dark:text-slate-200">{test.client_name}</h4>
-                                            <p className="text-xs text-slate-500">{test.company}</p>
-                                        </div>
+                                    <p className="text-slate-700 dark:text-slate-300 text-sm italic leading-relaxed">
+                                        "{t.feedback}"
+                                    </p>
+                                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+                                        <p className="font-bold text-slate-900 dark:text-white">{t.client_name}</p>
+                                        <p className="text-slate-500 dark:text-slate-400">{t.company}</p>
                                     </div>
                                 </div>
                             ))}
@@ -629,209 +1003,211 @@ export default function Home({ skills, experiences, services, featuredProjects, 
                 </section>
             )}
 
-            {/* 8. LATEST BLOGS */}
-            {latestBlogs.length > 0 && (
-                <section className="py-24 border-t border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950/30">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-16">
-                            <div className="space-y-2 text-center sm:text-left">
-                                <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Articles</span>
-                                <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Latest Blogs</h2>
+            {/* =========================================================================
+                SECTION 14: GITHUB REPOSITORIES
+               ========================================================================= */}
+            <section className="py-16 bg-slate-100/50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-800/80">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="p-8 rounded-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+                        <div className="space-y-2 text-center md:text-left">
+                            <div className="inline-flex items-center gap-2 text-xs font-mono text-cyan-600 dark:text-cyan-400 uppercase tracking-wider">
+                                <GithubIcon className="h-4 w-4" />
+                                <span>OPEN SOURCE & CODE REPOSITORIES</span>
                             </div>
-                            <Link 
-                                href={route('blogs.index')}
-                                className="inline-flex items-center text-sm font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 gap-1.5 transition-colors"
-                            >
-                                Read all articles <ArrowRight className="h-4.5 w-4.5" />
-                            </Link>
+                            <h3 className="text-2xl font-bold text-slate-950 dark:text-white">Explore My Work on GitHub</h3>
+                            <p className="text-slate-600 dark:text-slate-400 text-sm max-w-xl">
+                                Check out live codebase examples, Laravel packages, and full-stack software architecture implementations on my GitHub profile.
+                            </p>
                         </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {latestBlogs.map((blog) => (
-                                <div 
-                                    key={blog.id}
-                                    className="group flex flex-col rounded-3xl border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300"
-                                >
-                                    <div className="p-7 flex-grow flex flex-col justify-between space-y-4">
-                                        <div className="space-y-3">
-                                            <span className="text-xs uppercase font-bold tracking-widest text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 px-2.5 py-0.5 rounded">
-                                                {blog.category}
-                                            </span>
-                                            <h3 className="font-extrabold text-base sm:text-lg text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
-                                                {blog.title}
-                                            </h3>
-                                            <p className="text-sm text-slate-500 dark:text-slate-300 line-clamp-3 leading-relaxed">
-                                                {blog.content.substring(0, 150)}...
-                                            </p>
-                                        </div>
-                                        <Link 
-                                            href={route('blogs.show', blog.slug)}
-                                            className="inline-flex items-center text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline gap-1 pt-4"
-                                        >
-                                            Read More <ArrowRight className="h-3 w-3" />
-                                        </Link>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                        <a
+                            href={settings?.github_url || 'https://github.com/JahidHasanOfficial'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-700 hover:border-slate-600 transition-all shrink-0 cursor-pointer"
+                        >
+                            Visit GitHub Profile
+                            <ArrowUpRight className="h-4 w-4" />
+                        </a>
                     </div>
-                </section>
-            )}
+                </div>
+            </section>
 
-            {/* 9. CONTACT CTA SECTION */}
-            <section id="contact" className="py-20 border-t border-slate-200 dark:border-slate-900">
+            {/* =========================================================================
+                SECTION 15: CONTACT SECTION
+               ========================================================================= */}
+            <section id="contact" className="py-24 border-t border-slate-200 dark:border-slate-800/80 relative">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-                        {/* Info Column */}
-                        <div className="lg:col-span-5 space-y-8">
-                            <div className="space-y-3">
-                                <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Get in touch</span>
-                                <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Let's craft your next software product.</h2>
-                                <p className="text-slate-600 dark:text-slate-300 text-sm sm:text-base leading-relaxed">
-                                    Have a freelancing contract, position open, or project proposal? Send a message and let's coordinate!
-                                </p>
+                        {/* Contact Information */}
+                        <div className="lg:col-span-5 space-y-6">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 text-xs font-mono font-medium uppercase tracking-wider">
+                                GET IN TOUCH
                             </div>
+                            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 dark:text-white tracking-tight">
+                                Let's Build Something Useful
+                            </h2>
+                            <p className="text-slate-600 dark:text-slate-400 text-base leading-relaxed">
+                                Have a project, business idea or software requirement? Let's discuss how I can help turn it into a reliable digital solution.
+                            </p>
 
-                            <div className="space-y-4 text-sm sm:text-base">
+                            <div className="space-y-4 pt-4">
                                 {settings?.email && (
-                                    <div className="flex items-center space-x-3.5">
-                                        <div className="h-10 w-10 rounded-lg bg-slate-100 dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                                    <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+                                        <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-cyan-600 dark:text-cyan-400">
                                             <Mail className="h-5 w-5" />
                                         </div>
                                         <div>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400">Email Address</p>
-                                            <a href={`mailto:${settings.email}`} className="font-semibold hover:underline text-slate-800 dark:text-slate-200">
+                                            <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">Email Directly</p>
+                                            <a href={`mailto:${settings.email}`} className="text-slate-900 dark:text-white hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors font-medium">
                                                 {settings.email}
                                             </a>
                                         </div>
                                     </div>
                                 )}
+
                                 {settings?.phone && (
-                                    <div className="flex items-center space-x-3.5">
-                                        <div className="h-10 w-10 rounded-lg bg-slate-100 dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                                    <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+                                        <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-emerald-600 dark:text-emerald-400">
                                             <Phone className="h-5 w-5" />
                                         </div>
                                         <div>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400">Phone Connection</p>
-                                            <a href={`tel:${settings.phone}`} className="font-semibold hover:underline text-slate-800 dark:text-slate-200">
-                                                {settings.phone}
-                                            </a>
+                                            <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">Phone / WhatsApp</p>
+                                            <span className="text-slate-900 dark:text-white font-medium">{settings.phone}</span>
                                         </div>
                                     </div>
                                 )}
-                                <div className="flex items-center space-x-3.5">
-                                    <div className="h-10 w-10 rounded-lg bg-slate-100 dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+
+                                <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+                                    <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-indigo-600 dark:text-indigo-400">
                                         <MapPin className="h-5 w-5" />
                                     </div>
                                     <div>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">Location Base</p>
-                                        <p className="font-semibold text-slate-850 dark:text-slate-200">
-                                            {settings?.address || 'Dhaka, Bangladesh'}
-                                        </p>
+                                        <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">Location</p>
+                                        <span className="text-slate-900 dark:text-white font-medium">{settings?.address || 'Dhaka, Bangladesh'}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Form Column */}
+                        {/* Interactive Project Inquiry Form */}
                         <div className="lg:col-span-7">
-                            <form 
-                                onSubmit={handleContactSubmit}
-                                className="p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-5"
-                            >
-                                <h3 className="font-bold text-xl text-slate-900 dark:text-white">Send Contact Message</h3>
-                                
-                                {/* Honeypot - hidden fields */}
-                                <input 
-                                    type="text" 
-                                    name="website_url" 
-                                    value={data.website_url} 
-                                    onChange={(e) => setData('website_url', e.target.value)} 
-                                    className="hidden" 
-                                />
+                            <div className="p-8 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-xl">
+                                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Send Project Inquiry</h3>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="space-y-1.5">
-                                        <label htmlFor="name" className="text-sm font-semibold text-slate-600 dark:text-slate-300">Your Name</label>
-                                        <input
-                                            type="text"
-                                            id="name"
-                                            value={data.name}
-                                            onChange={(e) => setData('name', e.target.value)}
-                                            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-600 text-sm sm:text-base"
-                                            placeholder="Enter your name"
-                                            required
-                                        />
-                                        {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
+                                {recentlySuccessful && (
+                                    <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-sm flex items-center gap-2">
+                                        <CheckCircle2 className="h-5 w-5 shrink-0" />
+                                        <span>Thank you! Your message has been sent successfully. I will get back to you shortly.</span>
                                     </div>
+                                )}
 
-                                    <div className="space-y-1.5">
-                                        <label htmlFor="email" className="text-sm font-semibold text-slate-600 dark:text-slate-300">Email Address</label>
-                                        <input
-                                            type="email"
-                                            id="email"
-                                            value={data.email}
-                                            onChange={(e) => setData('email', e.target.value)}
-                                            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-600 text-sm sm:text-base"
-                                            placeholder="you@example.com"
-                                            required
-                                        />
-                                        {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="space-y-1.5">
-                                        <label htmlFor="phone" className="text-sm font-semibold text-slate-600 dark:text-slate-300">Phone (Optional)</label>
-                                        <input
-                                            type="text"
-                                            id="phone"
-                                            value={data.phone}
-                                            onChange={(e) => setData('phone', e.target.value)}
-                                            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-600 text-sm sm:text-base"
-                                            placeholder="+880..."
-                                        />
-                                        {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
-                                    </div>
-
-                                    <div className="space-y-1.5">
-                                        <label htmlFor="subject" className="text-sm font-semibold text-slate-600 dark:text-slate-300">Subject</label>
-                                        <input
-                                            type="text"
-                                            id="subject"
-                                            value={data.subject}
-                                            onChange={(e) => setData('subject', e.target.value)}
-                                            className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-600 text-sm sm:text-base"
-                                            placeholder="What's this about?"
-                                            required
-                                        />
-                                        {errors.subject && <p className="text-xs text-red-500">{errors.subject}</p>}
-                                    </div>
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label htmlFor="message" className="text-sm font-semibold text-slate-600 dark:text-slate-300">Your Message</label>
-                                    <textarea
-                                        id="message"
-                                        rows={4}
-                                        value={data.message}
-                                        onChange={(e) => setData('message', e.target.value)}
-                                        className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-600 text-sm sm:text-base"
-                                        placeholder="Type your message details here..."
-                                        required
+                                <form onSubmit={submitContact} className="space-y-4">
+                                    {/* Honeypot field */}
+                                    <input
+                                        type="text"
+                                        name="website_url"
+                                        value={data.website_url}
+                                        onChange={(e) => setData('website_url', e.target.value)}
+                                        className="hidden"
+                                        tabIndex={-1}
+                                        autoComplete="off"
                                     />
-                                    {errors.message && <p className="text-xs text-red-500">{errors.message}</p>}
-                                </div>
 
-                                <button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="w-full py-3 px-4 border border-transparent text-sm font-semibold rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                                >
-                                    {processing ? 'Sending...' : 'Send Message'}
-                                    <Send className="h-4.5 w-4.5" />
-                                </button>
-                            </form>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-mono text-slate-600 dark:text-slate-400 mb-1">Your Name *</label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={data.name}
+                                                onChange={(e) => setData('name', e.target.value)}
+                                                placeholder="e.g. John Doe"
+                                                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:border-cyan-500 focus:outline-none transition-colors"
+                                            />
+                                            {errors.name && <p className="text-rose-500 text-xs mt-1">{errors.name}</p>}
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-mono text-slate-600 dark:text-slate-400 mb-1">Email Address *</label>
+                                            <input
+                                                type="email"
+                                                required
+                                                value={data.email}
+                                                onChange={(e) => setData('email', e.target.value)}
+                                                placeholder="john@company.com"
+                                                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:border-cyan-500 focus:outline-none transition-colors"
+                                            />
+                                            {errors.email && <p className="text-rose-500 text-xs mt-1">{errors.email}</p>}
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-mono text-slate-600 dark:text-slate-400 mb-1">Phone / WhatsApp</label>
+                                            <input
+                                                type="text"
+                                                value={data.phone}
+                                                onChange={(e) => setData('phone', e.target.value)}
+                                                placeholder="+880 1..."
+                                                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:border-cyan-500 focus:outline-none transition-colors"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-mono text-slate-600 dark:text-slate-400 mb-1">Project Type</label>
+                                            <select
+                                                value={data.project_type}
+                                                onChange={(e) => setData('project_type', e.target.value)}
+                                                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:border-cyan-500 focus:outline-none transition-colors"
+                                            >
+                                                <option value="Enterprise ERP">Enterprise ERP</option>
+                                                <option value="Sales CRM">Sales CRM</option>
+                                                <option value="HRM System">HRM System</option>
+                                                <option value="Web Application">Web Application</option>
+                                                <option value="E-commerce Platform">E-commerce Platform</option>
+                                                <option value="Automation & Webhooks">Automation & Webhooks</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-mono text-slate-600 dark:text-slate-400 mb-1">Estimated Budget</label>
+                                            <select
+                                                value={data.budget}
+                                                onChange={(e) => setData('budget', e.target.value)}
+                                                className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:border-cyan-500 focus:outline-none transition-colors"
+                                            >
+                                                <option value="< $500">&lt; $500</option>
+                                                <option value="$500 - $1,500">$500 - $1,500</option>
+                                                <option value="$1,500 - $5,000">$1,500 - $5,000</option>
+                                                <option value="$5,000+">$5,000+</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-mono text-slate-600 dark:text-slate-400 mb-1">Project Details & Requirements *</label>
+                                        <textarea
+                                            required
+                                            rows={4}
+                                            value={data.message}
+                                            onChange={(e) => setData('message', e.target.value)}
+                                            placeholder="Describe your operational workflow, core features needed, or timeline requirements..."
+                                            className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:border-cyan-500 focus:outline-none transition-colors"
+                                        />
+                                        {errors.message && <p className="text-rose-500 text-xs mt-1">{errors.message}</p>}
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={processing}
+                                        className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold text-slate-950 bg-gradient-to-r from-cyan-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 disabled:opacity-60 transition-all shadow-lg shadow-cyan-500/20 cursor-pointer"
+                                    >
+                                        {processing ? 'Sending...' : 'Send Message'}
+                                        <Send className="h-4 w-4" />
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>

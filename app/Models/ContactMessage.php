@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class ContactMessage extends Model
@@ -10,6 +11,8 @@ class ContactMessage extends Model
         'name',
         'email',
         'phone',
+        'project_type',
+        'budget',
         'subject',
         'message',
         'is_read',
@@ -20,5 +23,10 @@ class ContactMessage extends Model
         return [
             'is_read' => 'boolean',
         ];
+    }
+
+    public function scopeUnread(Builder $query): Builder
+    {
+        return $query->where('is_read', false);
     }
 }
