@@ -126,16 +126,24 @@ class PortfolioController extends Controller
         return redirect()->back()->with('success', 'Thank you! Your message has been sent successfully. I will get back to you shortly.');
     }
 
-    public function downloadResume(): StreamedResponse|RedirectResponse
+    public function downloadResume(): StreamedResponse|\Symfony\Component\HttpFoundation\BinaryFileResponse|RedirectResponse
     {
         $resume = $this->resumeService->incrementDownloadCount();
-        if (!$resume || !$resume->file_path) {
-            return redirect()->back()->with('error', 'Resume is currently being updated. Please contact directly.');
+        
+        // 1. Check if public/assets/resume.pdf exists directly
+        if (file_exists(public_path('assets/resume.pdf'))) {
+            return response()->download(public_path('assets/resume.pdf'), 'Jahid_Hasan_Software_Engineer_Resume.pdf');
         }
 
-        $cleanPath = str_replace('/storage/', '', $resume->file_path);
-        if (Storage::disk('public')->exists($cleanPath)) {
-            return Storage::disk('public')->download($cleanPath, 'Jahid_Hasan_Software_Engineer_Resume.pdf');
+        // 2. Check storage disk
+        if ($resume && $resume->file_path) {
+            $cleanPath = str_replace('/storage/', '', $resume->file_path);
+            if (Storage::disk('public')->exists($cleanPath)) {
+                return Storage::disk('public')->download($cleanPath, 'Jahid_Hasan_Software_Engineer_Resume.pdf');
+            }
+            if (file_exists(public_path(ltrim($resume->file_path, '/')))) {
+                return response()->download(public_path(ltrim($resume->file_path, '/')), 'Jahid_Hasan_Software_Engineer_Resume.pdf');
+            }
         }
 
         return redirect()->back()->with('error', 'Resume file not found on server.');

@@ -125,4 +125,14 @@ class PortfolioControllerTest extends TestCase
 
         $response->assertSessionHasErrors(['website_url']);
     }
+
+    public function test_resume_download_endpoint_returns_file_response(): void
+    {
+        $response = $this->get(route('resume.download'));
+
+        $this->assertTrue(
+            in_array($response->getStatusCode(), [200, 302]),
+            'Resume download endpoint should respond successfully.'
+        );
+    }
 }

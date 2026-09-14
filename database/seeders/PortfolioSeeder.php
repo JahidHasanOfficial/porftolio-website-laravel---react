@@ -445,5 +445,14 @@ class PortfolioSeeder extends Seeder
         foreach ($blogs as $b) {
             Blog::updateOrCreate(['slug' => $b['slug']], $b);
         }
+
+        // 9. Default Resume
+        Resume::updateOrCreate(
+            ['id' => 1],
+            [
+                'file_path' => '/assets/resume.pdf',
+                'download_count' => 142,
+            ]
+        );
     }
 }
