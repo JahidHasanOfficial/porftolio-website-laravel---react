@@ -1,0 +1,104 @@
+name: CI/CD Pipeline - Deploy to Main
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: production_deployment
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Run Automated Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_sqlite, bcmath, curl, zip, gd, fileinfo
+          coverage: none
+
+      - name: Copy .env.example to .env
+        run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+
+      - name: Install Composer Dependencies (Dev Included for Testing)
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Generate App Key
+        run: php artisan key:generate
+
+      - name: Run PHPUnit Tests
+        run: php vendor/phpunit/phpunit/phpunit
+
+  build-and-deploy:
+    name: Build Assets & Deploy via FTP
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 1. Setup Node & Build Frontend Assets
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install NPM Dependencies
+        run: npm ci || npm install
+
+      - name: Build Vite Assets (React / Inertia)
+        run: npm run build
+
+      # 2. Setup PHP & Production Dependencies
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, bcmath, curl, zip, gd, fileinfo
+          coverage: none
+
+      - name: Install Production Composer Dependencies
+        run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress
+
+      # 3. Deploy to Server via FTP
+      - name: Deploy Files via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ secrets.FTP_PORT || 21 }}
+          server-dir: /
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/tests/**
+            .github/**
+            phpunit.xml
+            README.md
+            document.md
+            .env.example
+            .editorconfig
+            .npmrc
+            package.json
+            package-lock.json
+            vite.config.js
+            postcss.config.js
+            tailwind.config.js
+            jsconfig.json
+            storage/logs/*.log
+            storage/framework/cache/data/**
+            storage/framework/sessions/**
+            storage/framework/views/**
