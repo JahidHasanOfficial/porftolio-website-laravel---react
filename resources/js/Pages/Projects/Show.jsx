@@ -27,21 +27,21 @@ export default function Show({ project, relatedProjects }) {
     return (
         <AppLayout>
             {/* Case Study Header & Breadcrumb */}
-            <section className="bg-slate-950/80 py-12 border-b border-slate-800">
+            <section className="bg-slate-100 dark:bg-slate-950/80 pt-10 pb-12 sm:pt-14 sm:pb-16 border-b border-slate-200 dark:border-slate-800">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
                     <Link 
                         href={route('projects.index')}
-                        className="inline-flex items-center text-xs font-mono text-cyan-400 hover:text-cyan-300 gap-1.5 transition-colors"
+                        className="inline-flex items-center text-xs font-mono text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 gap-1.5 transition-colors"
                     >
                         <ArrowLeft className="h-3.5 w-3.5" /> Back to all projects
                     </Link>
 
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div className="space-y-1">
-                            <span className="text-xs font-mono font-semibold uppercase tracking-widest text-cyan-400">
+                            <span className="text-xs font-mono font-semibold uppercase tracking-widest text-cyan-600 dark:text-cyan-400">
                                 Case Study // {project.category}
                             </span>
-                            <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                            <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
                                 {project.name}
                             </h1>
                         </div>

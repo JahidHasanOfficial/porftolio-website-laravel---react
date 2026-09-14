@@ -111,7 +111,7 @@ export default function Home({ skills, experiences, services, featuredProjects, 
             {/* =========================================================================
                 SECTION 01: HERO SECTION
                ========================================================================= */}
-            <section className="relative pt-20 pb-18 md:pt-30 md:pb-26 overflow-hidden">
+            <section className="relative pt-12 sm:pt-16 md:pt-20 lg:pt-28 pb-16 md:pb-24 lg:pb-32 overflow-hidden">
                 {/* Ambient glow backgrounds */}
                 <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-gradient-to-tr from-cyan-500/15 via-indigo-500/10 to-emerald-500/15 blur-[130px] -z-10 pointer-events-none rounded-full" />
 
@@ -495,21 +495,41 @@ export default function Home({ skills, experiences, services, featuredProjects, 
                                 className="flex flex-col rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 hover:border-cyan-500/50 dark:hover:border-cyan-500/40 overflow-hidden shadow-sm dark:shadow-lg transition-all hover:-translate-y-1.5 group"
                             >
                                 {/* Project Card Visual */}
-                                <div className="relative h-48 bg-slate-100 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-center overflow-hidden p-6">
-                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-100 dark:from-slate-950 via-slate-100/40 dark:via-slate-950/40 to-transparent z-10 pointer-events-none" />
-                                    <div className="z-20 text-center space-y-2">
-                                        <div className="inline-flex items-center justify-center p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-cyan-600 dark:text-cyan-400 group-hover:scale-110 transition-transform shadow-xs">
-                                            <Code2 className="h-6 w-6" />
+                                <div className="relative h-52 bg-slate-100 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800/80 overflow-hidden">
+                                    {project.thumbnail ? (
+                                        <>
+                                            <img 
+                                                src={project.thumbnail} 
+                                                alt={project.name}
+                                                className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent pointer-events-none" />
+                                        </>
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center p-6 relative">
+                                            <div className="absolute inset-0 bg-gradient-to-t from-slate-100 dark:from-slate-950 via-slate-100/40 dark:via-slate-950/40 to-transparent z-10 pointer-events-none" />
+                                            <div className="z-20 text-center space-y-2">
+                                                <div className="inline-flex items-center justify-center p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-cyan-600 dark:text-cyan-400 group-hover:scale-110 transition-transform shadow-xs">
+                                                    <Code2 className="h-6 w-6" />
+                                                </div>
+                                                <div className="text-xs font-mono font-semibold text-cyan-700 dark:text-cyan-300 uppercase tracking-widest">
+                                                    {project.category}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="text-xs font-mono font-semibold text-cyan-700 dark:text-cyan-300 uppercase tracking-widest">
-                                            {project.category}
-                                        </div>
-                                    </div>
+                                    )}
 
                                     {/* Category Status Pill */}
                                     <div className="absolute top-3 left-3 z-20">
-                                        <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-medium bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 backdrop-blur-md">
+                                        <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-medium bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 backdrop-blur-md shadow-sm">
                                             {project.status || 'Production'}
+                                        </span>
+                                    </div>
+
+                                    {/* Category Badge on Top Right */}
+                                    <div className="absolute top-3 right-3 z-20">
+                                        <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-cyan-500/90 text-slate-950 shadow-sm backdrop-blur-md">
+                                            {project.category}
                                         </span>
                                     </div>
                                 </div>
