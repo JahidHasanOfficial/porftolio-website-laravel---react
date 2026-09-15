@@ -69,7 +69,7 @@ export default function Home({ skills, experiences, services, featuredProjects, 
             }
         }
         return [
-            'Software Engineer3',
+            'Software Engineer',
             'Enterprise ERP Builder',
             'Sales CRM & Automation Specialist',
             'Laravel & React Specialist',
@@ -123,7 +123,7 @@ export default function Home({ skills, experiences, services, featuredProjects, 
                             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 shadow-sm backdrop-blur-md">
                                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
                                 <span className="h-2 w-2 rounded-full bg-emerald-500 -ml-3"></span>
-                                <span className="text-cyan-600 dark:text-cyan-400 font-mono font-semibold">Available for Hiresss</span>
+                                <span className="text-cyan-600 dark:text-cyan-400 font-mono font-semibold">Available for Hire</span>
                                 <span className="text-slate-300 dark:text-slate-600">|</span>
                                 <span>Software Engineer & Business Systems</span>
                             </div>
