@@ -19,7 +19,7 @@ export default function Index({ resume }) {
 
     return (
         <AdminLayout title="Manage Resume CV">
-            <div className="space-y-8 max-w-2xl">
+            <div className="space-y-8 w-full">
                 {/* Metrics & Upload Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     {/* Downloads Stats */}

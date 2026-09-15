@@ -223,7 +223,7 @@
     ]
   },
   "resources/js/Pages/Admin/Blogs/Create.jsx": {
-    "file": "assets/Create-meZbJX_T.js",
+    "file": "assets/Create-BAiJHgx5.js",
     "name": "Create",
     "src": "resources/js/Pages/Admin/Blogs/Create.jsx",
     "isDynamicEntry": true,
@@ -235,7 +235,7 @@
     ]
   },
   "resources/js/Pages/Admin/Blogs/Edit.jsx": {
-    "file": "assets/Edit-spF6yQhn.js",
+    "file": "assets/Edit-BKdDxbX7.js",
     "name": "Edit",
     "src": "resources/js/Pages/Admin/Blogs/Edit.jsx",
     "isDynamicEntry": true,
@@ -243,7 +243,8 @@
       "_jsx-runtime-BOi_bBi4.js",
       "_arrow-left-JsYNSaOc.js",
       "_AdminLayout-BwlGFaT8.js",
-      "_save-BaeUwfHL.js"
+      "_save-BaeUwfHL.js",
+      "_trash-2-kE2VpcRv.js"
     ]
   },
   "resources/js/Pages/Admin/Blogs/Index.jsx": {
@@ -334,7 +335,7 @@
     ]
   },
   "resources/js/Pages/Admin/Projects/Create.jsx": {
-    "file": "assets/Create-DyNNvS6X.js",
+    "file": "assets/Create-rvqRyTQq.js",
     "name": "Create",
     "src": "resources/js/Pages/Admin/Projects/Create.jsx",
     "isDynamicEntry": true,
@@ -346,7 +347,7 @@
     ]
   },
   "resources/js/Pages/Admin/Projects/Edit.jsx": {
-    "file": "assets/Edit-27kDuIzX.js",
+    "file": "assets/Edit-ADYh1pBK.js",
     "name": "Edit",
     "src": "resources/js/Pages/Admin/Projects/Edit.jsx",
     "isDynamicEntry": true,
@@ -373,7 +374,7 @@
     ]
   },
   "resources/js/Pages/Admin/Resume/Index.jsx": {
-    "file": "assets/Index-ClgFekik.js",
+    "file": "assets/Index-daTbO1fH.js",
     "name": "Index",
     "src": "resources/js/Pages/Admin/Resume/Index.jsx",
     "isDynamicEntry": true,
@@ -401,7 +402,7 @@
     ]
   },
   "resources/js/Pages/Admin/Settings.jsx": {
-    "file": "assets/Settings-B5GFBOlC.js",
+    "file": "assets/Settings-CBOoT-aw.js",
     "name": "Settings",
     "src": "resources/js/Pages/Admin/Settings.jsx",
     "isDynamicEntry": true,
@@ -653,7 +654,7 @@
     ]
   },
   "resources/js/app.jsx": {
-    "file": "assets/app-CJ8Z_8d2.js",
+    "file": "assets/app-C-XAo6k-.js",
     "name": "app",
     "src": "resources/js/app.jsx",
     "isEntry": true,
@@ -698,7 +699,7 @@
       "resources/js/Pages/Welcome.jsx"
     ],
     "css": [
-      "assets/app-DSOvcTjO.css"
+      "assets/app-NQm0Lxgj.css"
     ]
   }
 }

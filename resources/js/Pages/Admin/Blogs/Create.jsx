@@ -34,15 +34,41 @@ export default function Create() {
 
     return (
         <AdminLayout title="Create Blog Post">
-            <div className="space-y-6 max-w-4xl">
-                <Link 
-                    href={route('admin.blogs.index')}
-                    className="inline-flex items-center text-xs font-bold text-slate-500 hover:text-indigo-650 dark:hover:text-indigo-400 gap-1"
-                >
-                    <ArrowLeft className="h-4 w-4" /> Back to blog list
-                </Link>
+            <div className="space-y-6 w-full">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center space-x-3">
+                        <Link 
+                            href={route('admin.blogs.index')}
+                            className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors shadow-xs"
+                            title="Back to list"
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                        </Link>
+                        <div>
+                            <h1 className="text-xl font-bold text-slate-900 dark:text-white">Create New Article</h1>
+                            <p className="text-xs text-slate-500">Write educational software engineering articles</p>
+                        </div>
+                    </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="flex items-center gap-2.5">
+                        <Link
+                            href={route('admin.blogs.index')}
+                            className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        >
+                            Cancel
+                        </Link>
+                        <button
+                            type="button"
+                            onClick={handleSubmit}
+                            disabled={processing}
+                            className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-600/20 transition-all active:scale-95 disabled:opacity-50"
+                        >
+                            <Save className="h-4 w-4" /> Publish Blog
+                        </button>
+                    </div>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-6 w-full">
                     {/* Basic Blog Info */}
                     <div className="rounded-2xl border border-slate-200 dark:border-slate-805 bg-white dark:bg-slate-900 p-6 space-y-6 shadow-sm">
                         <h3 className="font-bold text-base border-b border-slate-100 dark:border-slate-850 pb-3">Article Content</h3>
@@ -164,13 +190,19 @@ export default function Create() {
                         </div>
                     </div>
 
-                    <div className="flex justify-end pt-2">
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-800">
+                        <Link
+                            href={route('admin.blogs.index')}
+                            className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        >
+                            Cancel & Return
+                        </Link>
                         <button
                             type="submit"
                             disabled={processing}
-                            className="inline-flex items-center justify-center px-5 py-2.5 border border-transparent text-sm font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg transition-all gap-1.5 cursor-pointer disabled:opacity-50"
+                            className="inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-600/20 transition-all gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95"
                         >
-                            <Save className="h-4.5 w-4.5" /> Save Blog Post
+                            <Save className="h-4.5 w-4.5" /> Publish Blog Post
                         </button>
                     </div>
                 </form>
