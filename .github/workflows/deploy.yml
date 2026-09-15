@@ -61,18 +61,7 @@ jobs:
       - name: Build Vite Assets (React / Inertia)
         run: npm run build
 
-      # 2. Setup PHP & Production Dependencies
-      - name: Setup PHP 8.3
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, bcmath, curl, zip, gd, fileinfo
-          coverage: none
-
-      - name: Install Production Composer Dependencies
-        run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress
-
-      # 3. Deploy to Server via FTP
+      # 2. Deploy to Server via FTP
       - name: Deploy Files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -85,6 +74,8 @@ jobs:
             **/.git*
             **/.git*/**
             **/node_modules/**
+            **/vendor/**
+            vendor/**
             **/tests/**
             .github/**
             phpunit.xml
