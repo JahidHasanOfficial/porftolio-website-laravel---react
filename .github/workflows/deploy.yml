@@ -1,4 +1,4 @@
-name: CI/CD Pipeline - Deploy to Main
+name: CI/CD Pipeline - Test, Build & Deploy
 
 on:
   push:
@@ -11,8 +11,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # -------------------------------------------------------------
+  # 1. CI (Continuous Integration): Automated Testing
+  # -------------------------------------------------------------
   test:
-    name: Run Automated Tests
+    name: 🧪 Run Automated Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -29,7 +32,7 @@ jobs:
       - name: Copy .env.example to .env
         run: php -r "file_exists('.env') || copy('.env.example', '.env');"
 
-      - name: Install Composer Dependencies (Dev Included for Testing)
+      - name: Install Composer Dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
 
       - name: Generate App Key
@@ -38,63 +41,28 @@ jobs:
       - name: Run PHPUnit Tests
         run: php vendor/phpunit/phpunit/phpunit
 
-  build-and-deploy:
-    name: Build Assets & Deploy via FTP
+  # -------------------------------------------------------------
+  # 2. CD (Continuous Deployment): Live Deployment & Cache Clear
+  # -------------------------------------------------------------
+  deploy:
+    name: 🚀 Deploy to Production Server
     needs: test
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      # 1. Setup Node & Build Frontend Assets
-      - name: Setup Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
-      - name: Install NPM Dependencies
-        run: npm install --legacy-peer-deps
-
-
-      - name: Build Vite Assets (React / Inertia)
-        run: npm run build
-
-      # 2. Deploy to Server via FTP
-      - name: Deploy Files via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          port: ${{ secrets.FTP_PORT || 21 }}
-          protocol: ftps
-          security: loose
-          timeout: 120000
-          server-dir: /
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            **/vendor/**
-            vendor/**
-            **/tests/**
-            .github/**
-            .env
-            .env.*
-            phpunit.xml
-            README.md
-            document.md
-            .editorconfig
-            .npmrc
-            package.json
-            package-lock.json
-            vite.config.js
-            postcss.config.js
-            tailwind.config.js
-            jsconfig.json
-            storage/logs/*.log
-            storage/framework/cache/data/**
-            storage/framework/sessions/**
-            storage/framework/views/**
+      - name: Trigger Live Server Deployment
+        run: |
+          echo "Initiating production deployment to engineerjahid.xyz..."
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "https://engineerjahid.xyz/deploy-webhook.php?token=portfolio_deploy_secret_key_84920482")
+          HTTP_STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | cut -d':' -f2)
+          BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
+          
+          echo "Server Response:"
+          echo "$BODY"
+          
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "❌ Deployment failed with HTTP status: $HTTP_STATUS"
+            exit 1
+          fi
+          
+          echo "✅ Deployment completed successfully!"
