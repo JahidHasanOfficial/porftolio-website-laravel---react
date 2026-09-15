@@ -69,6 +69,9 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           port: ${{ secrets.FTP_PORT || 21 }}
+          protocol: ftps
+          security: loose
+          timeout: 120000
           server-dir: /
           exclude: |
             **/.git*
@@ -78,10 +81,11 @@ jobs:
             vendor/**
             **/tests/**
             .github/**
+            .env
+            .env.*
             phpunit.xml
             README.md
             document.md
-            .env.example
             .editorconfig
             .npmrc
             package.json
