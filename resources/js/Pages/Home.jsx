@@ -69,7 +69,7 @@ export default function Home({ skills, experiences, services, featuredProjects, 
             }
         }
         return [
-            'Software Engineer',
+            'Software Engineer3',
             'Enterprise ERP Builder',
             'Sales CRM & Automation Specialist',
             'Laravel & React Specialist',
