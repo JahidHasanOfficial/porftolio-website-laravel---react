@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\ResumeController;
 use App\Http\Controllers\Admin\BlogController;
 use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\ContactMessageController;
+use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,6 +25,7 @@ Route::get('/projects/{slug}', [PortfolioController::class, 'projectDetails'])->
 Route::get('/blogs', [PortfolioController::class, 'blogs'])->name('blogs.index');
 Route::get('/blogs/{slug}', [PortfolioController::class, 'blogDetails'])->name('blogs.show');
 Route::post('/contact', [PortfolioController::class, 'contact'])->name('contact.submit');
+Route::post('/api/ai-chat', [AiChatController::class, 'chat'])->name('ai.chat');
 Route::get('/resume/download', [PortfolioController::class, 'downloadResume'])->name('resume.download');
 
 // Admin Panel Routes

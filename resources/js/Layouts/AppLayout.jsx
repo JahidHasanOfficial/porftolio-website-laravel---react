@@ -3,7 +3,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { Menu, X, Sun, Moon, Mail, ExternalLink, ArrowRight, Code2 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
-import WhatsAppWidget from '@/Components/WhatsAppWidget';
+import PortfolioAIChatbot from '@/Components/PortfolioAIChatbot';
 
 export default function AppLayout({ children }) {
     const { settings, flash, url, auth } = usePage().props;
@@ -347,13 +347,8 @@ export default function AppLayout({ children }) {
                 </div>
             </footer>
 
-            {/* Interactive Floating WhatsApp Chat Widget */}
-            <WhatsAppWidget 
-                whatsappNumber={settings?.whatsapp || '8801865277323'}
-                phoneNumber={settings?.phone || '+880 1521-719305'}
-                email={settings?.email || 'jahidhasanofficial23@gmail.com'}
-                developerName={developerName}
-            />
+            {/* Intelligent AI Portfolio Chatbot & WhatsApp Bridge */}
+            <PortfolioAIChatbot />
         </div>
     );
 }
