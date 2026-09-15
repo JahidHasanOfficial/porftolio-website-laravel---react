@@ -2,6 +2,13 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/engineerjahid/public_html/
+    - /bin/mkdir -p $DEPLOYPATH/storage/framework/cache/data
+    - /bin/mkdir -p $DEPLOYPATH/storage/framework/sessions
+    - /bin/mkdir -p $DEPLOYPATH/storage/framework/views
+    - /bin/mkdir -p $DEPLOYPATH/storage/logs
+    - /bin/mkdir -p $DEPLOYPATH/storage/app/public
+    - /bin/mkdir -p $DEPLOYPATH/bootstrap/cache
+    - /bin/chmod -R 775 $DEPLOYPATH/storage $DEPLOYPATH/bootstrap/cache
     - /bin/cp -R app $DEPLOYPATH
     - /bin/cp -R bootstrap $DEPLOYPATH
     - /bin/cp -R config $DEPLOYPATH
